@@ -39,6 +39,6 @@ public class Crew extends BaseEntity{
     private String description;
     @Column(nullable = false)
     private int maxMemberCount;
-    private int currentMemberCount = 1;
+    private int currentMemberCount = 0;
 
 }
