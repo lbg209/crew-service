@@ -1,0 +1,65 @@
+package com.lbg0146.crew_service.service;
+
+import com.lbg0146.crew_service.domain.Crew;
+import com.lbg0146.crew_service.domain.Member;
+import com.lbg0146.crew_service.domain.MemberCrewApplication;
+import com.lbg0146.crew_service.domain.enums.ApplicationStatus;
+import com.lbg0146.crew_service.repository.CrewRepository;
+import com.lbg0146.crew_service.repository.MemberCrewApplicationRepository;
+import com.lbg0146.crew_service.repository.MemberRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class MemberCrewApplicationService {
+
+    private final MemberRepository memberRepository;
+    private final CrewRepository crewRepository;
+    private final MemberCrewApplicationRepository applicationRepository;
+
+    public void apply(Long memberId, Long crewId) {
+        if (applicationRepository.findByMemberIdAndCrewId(memberId, crewId).isPresent()){
+            throw new IllegalStateException("이미 신청한 크루입니다.");
+        }
+
+        Member member = memberRepository.findById(memberId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
+        Crew crew = crewRepository.findById(crewId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 크루입니다."));
+        MemberCrewApplication application = new MemberCrewApplication();
+
+        application.setAppliedAt(LocalDateTime.now());
+        application.setMember(member);
+        application.setCrew(crew);
+        application.setStatus(ApplicationStatus.PENDING);
+
+        applicationRepository.save(application);
+    }
+
+    public void approve(Long applicationId) {
+        MemberCrewApplication application = applicationRepository.findById(applicationId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신청입니다"));
+
+        if (application.getStatus() != ApplicationStatus.PENDING) {
+            throw new IllegalStateException("대기중인 신청만 승인 가능합니다.");
+        }
+
+        application.setStatus(ApplicationStatus.APPROVED);
+
+        Crew findCrew = application.getCrew();
+        findCrew.increaseMemberCount();
+    }
+
+    public void reject(Long applicationId) {
+        MemberCrewApplication application = applicationRepository.findById(applicationId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신청입니다"));
+
+        if (application.getStatus() != ApplicationStatus.PENDING) {
+            throw new IllegalStateException("대기중인 신청만 거절 가능합니다.");
+        }
+
+        application.setStatus(ApplicationStatus.REJECTED);
+
+    }
+}
