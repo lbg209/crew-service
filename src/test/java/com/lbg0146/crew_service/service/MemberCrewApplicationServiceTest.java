@@ -1,6 +1,7 @@
 package com.lbg0146.crew_service.service;
 
-import com.lbg0146.crew_service.domain.Member;
+import com.lbg0146.crew_service.dto.CrewCreateRequest;
+import com.lbg0146.crew_service.dto.MemberCreateRequest;
 import com.lbg0146.crew_service.domain.MemberCrewApplication;
 import com.lbg0146.crew_service.domain.enums.ApplicationStatus;
 import com.lbg0146.crew_service.domain.enums.Region;
@@ -26,20 +27,18 @@ class MemberCrewApplicationServiceTest {
     @Autowired
     CrewService crewService;
 
-    private Long createAndSaveMember(String nickname, String loginId) {
-        Member member = new Member();
-        member.setNickname(nickname);
-        member.setLoginId(loginId);
-        member.setPassword("1234");
+    private Long createAndSaveMember(String loginId, String nickname) {
+        MemberCreateRequest member = new MemberCreateRequest(loginId, "1234", nickname);
 
         return memberService.join(member);
     }
 
     @Test
     public void 크루신청() {
-        Long leaderId = createAndSaveMember("LEE", "lbg");
-        Long applicantId = createAndSaveMember("KIM", "abc");
-        Long crewId = crewService.createCrew(leaderId, SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", 10);
+        Long leaderId = createAndSaveMember("lbg", "LEE");
+        Long applicantId = createAndSaveMember("abc", "KIM");
+        CrewCreateRequest crewCreateRequest = new CrewCreateRequest(leaderId, SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", 10);
+        Long crewId = crewService.createCrew(crewCreateRequest);
 
         applicationService.apply(applicantId, crewId);
 
@@ -52,13 +51,14 @@ class MemberCrewApplicationServiceTest {
 
     @Test
     public void 승인() {
-        Long leaderId = createAndSaveMember("LEE", "lbg");
-        Long applicantId = createAndSaveMember("KIM", "abc");
-        Long crewId = crewService.createCrew(leaderId, SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", 10);
+        Long leaderId = createAndSaveMember("lbg", "LEE");
+        Long applicantId = createAndSaveMember("abc", "KIM");
+        CrewCreateRequest crewCreateRequest = new CrewCreateRequest(leaderId, SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", 10);
+        Long crewId = crewService.createCrew(crewCreateRequest);
 
         applicationService.apply(applicantId, crewId);
         MemberCrewApplication application = applicationRepository.findByMemberIdAndCrewId(applicantId, crewId).orElseThrow();
-        applicationService.approve(application.getId());
+        applicationService.approve(application.getId(), leaderId);
 
         assertThat(application.getStatus()).isEqualTo(ApplicationStatus.APPROVED);
         assertThat(application.getCrew().getCurrentMemberCount()).isEqualTo(2);
@@ -66,22 +66,24 @@ class MemberCrewApplicationServiceTest {
 
     @Test
     public void 거절() {
-        Long leaderId = createAndSaveMember("LEE", "lbg");
-        Long applicantId = createAndSaveMember("KIM", "abc");
-        Long crewId = crewService.createCrew(leaderId, SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", 10);
+        Long leaderId = createAndSaveMember("lbg", "LEE");
+        Long applicantId = createAndSaveMember("abc", "KIM");
+        CrewCreateRequest crewCreateRequest = new CrewCreateRequest(leaderId, SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", 10);
+        Long crewId = crewService.createCrew(crewCreateRequest);
 
         applicationService.apply(applicantId, crewId);
         MemberCrewApplication application = applicationRepository.findByMemberIdAndCrewId(applicantId, crewId).orElseThrow();
-        applicationService.reject(application.getId());
+        applicationService.reject(application.getId(), leaderId);
 
         assertThat(application.getStatus()).isEqualTo(ApplicationStatus.REJECTED);
     }
 
     @Test
     public void 중복신청() {
-        Long leaderId = createAndSaveMember("LEE", "lbg");
-        Long applicantId = createAndSaveMember("KIM", "abc");
-        Long crewId = crewService.createCrew(leaderId, SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", 10);
+        Long leaderId = createAndSaveMember("lbg", "LEE");
+        Long applicantId = createAndSaveMember("abc", "KIM");
+        CrewCreateRequest crewCreateRequest = new CrewCreateRequest(leaderId, SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", 10);
+        Long crewId = crewService.createCrew(crewCreateRequest);
 
         applicationService.apply(applicantId, crewId);
 
@@ -90,27 +92,29 @@ class MemberCrewApplicationServiceTest {
 
     @Test
     public void 중복승인() {
-        Long leaderId = createAndSaveMember("LEE", "lbg");
-        Long applicantId = createAndSaveMember("KIM", "abc");
-        Long crewId = crewService.createCrew(leaderId, SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", 10);
+        Long leaderId = createAndSaveMember("lbg", "LEE");
+        Long applicantId = createAndSaveMember("abc", "KIM");
+        CrewCreateRequest crewCreateRequest = new CrewCreateRequest(leaderId, SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", 10);
+        Long crewId = crewService.createCrew(crewCreateRequest);
 
         applicationService.apply(applicantId, crewId);
         MemberCrewApplication application = applicationRepository.findByMemberIdAndCrewId(applicantId, crewId).orElseThrow();
-        applicationService.approve(application.getId());
+        applicationService.approve(application.getId(), leaderId);
 
-        assertThatThrownBy(() -> applicationService.approve(application.getId())).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> applicationService.approve(application.getId(), leaderId)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     public void 정원초과() {
-        Long leaderId = createAndSaveMember("LEE", "lbg");
-        Long applicantId = createAndSaveMember("KIM", "abc");
-        Long crewId = crewService.createCrew(leaderId, SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", 1);
+        Long leaderId = createAndSaveMember("lbg", "LEE");
+        Long applicantId = createAndSaveMember("abc", "KIM");
+        CrewCreateRequest crewCreateRequest = new CrewCreateRequest(leaderId, SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", 1);
+        Long crewId = crewService.createCrew(crewCreateRequest);
 
         applicationService.apply(applicantId, crewId);
         MemberCrewApplication application = applicationRepository.findByMemberIdAndCrewId(applicantId, crewId).orElseThrow();
 
-        assertThatThrownBy(() -> applicationService.approve(application.getId())).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> applicationService.approve(application.getId(), leaderId)).isInstanceOf(IllegalStateException.class);
     }
 
 }

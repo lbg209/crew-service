@@ -42,6 +42,19 @@ public class Crew extends BaseEntity{
     @Column(nullable = false)
     private int currentMemberCount = 0;
 
+    protected Crew(){
+    }
+
+    public Crew(Member leader, SubCategory subCategory, Region region, String title, String description, int maxMemberCount) {
+        this.leader = leader;
+        this.subCategory = subCategory;
+        this.region = region;
+        this.title = title;
+        this.description = description;
+        this.maxMemberCount = maxMemberCount;
+        this.currentMemberCount = 1;
+    }
+
     public void increaseMemberCount() {
         if (currentMemberCount >= maxMemberCount) {
             throw new IllegalStateException("정원이 초과되었습니다.");

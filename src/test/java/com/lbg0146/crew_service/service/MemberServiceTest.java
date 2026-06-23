@@ -1,5 +1,6 @@
 package com.lbg0146.crew_service.service;
 
+import com.lbg0146.crew_service.dto.MemberCreateRequest;
 import com.lbg0146.crew_service.domain.Member;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,7 +8,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
@@ -18,10 +18,7 @@ class MemberServiceTest {
 
     @Test
     public void 회원가입() {
-        Member member = new Member();
-        member.setNickname("LEE");
-        member.setLoginId("lbg");
-        member.setPassword("1234");
+        MemberCreateRequest member = new MemberCreateRequest("lbg", "1234", "LEE");
 
         Long saveId = memberService.join(member);
         Member findMember = memberService.findOne(saveId);

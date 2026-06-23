@@ -22,13 +22,18 @@ public class MemberCrewApplicationService {
     private final CrewRepository crewRepository;
     private final MemberCrewApplicationRepository applicationRepository;
 
-    public void apply(Long memberId, Long crewId) {
+    public Long apply(Long memberId, Long crewId) {
         if (applicationRepository.findByMemberIdAndCrewId(memberId, crewId).isPresent()){
             throw new IllegalStateException("이미 신청한 크루입니다.");
         }
 
         Member member = memberRepository.findById(memberId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
         Crew crew = crewRepository.findById(crewId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 크루입니다."));
+        if (crew.getLeader().getId().equals(memberId)) {
+            throw new IllegalStateException("크루장은 신청할 수 없습니다.");
+        }
+
+
         MemberCrewApplication application = new MemberCrewApplication();
 
         application.setAppliedAt(LocalDateTime.now());
@@ -37,29 +42,40 @@ public class MemberCrewApplicationService {
         application.setStatus(ApplicationStatus.PENDING);
 
         applicationRepository.save(application);
+
+        return application.getId();
     }
 
-    public void approve(Long applicationId) {
+    public void approve(Long applicationId, Long leaderId) {
         MemberCrewApplication application = applicationRepository.findById(applicationId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신청입니다"));
 
         if (application.getStatus() != ApplicationStatus.PENDING) {
             throw new IllegalStateException("대기중인 신청만 승인 가능합니다.");
         }
 
-        application.setStatus(ApplicationStatus.APPROVED);
+        Crew crew = application.getCrew();
 
-        Crew findCrew = application.getCrew();
-        findCrew.increaseMemberCount();
+        if (!crew.getLeader().getId().equals(leaderId)) {
+            throw new IllegalStateException("크루 리더만 승인 가능합니다.");
+        }
+
+        application.setStatus(ApplicationStatus.APPROVED);
+        crew.increaseMemberCount();
     }
 
-    public void reject(Long applicationId) {
+    public void reject(Long applicationId, Long leaderId) {
         MemberCrewApplication application = applicationRepository.findById(applicationId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신청입니다"));
 
         if (application.getStatus() != ApplicationStatus.PENDING) {
             throw new IllegalStateException("대기중인 신청만 거절 가능합니다.");
         }
 
-        application.setStatus(ApplicationStatus.REJECTED);
+        Crew crew = application.getCrew();
 
+        if (!crew.getLeader().getId().equals(leaderId)) {
+            throw new IllegalStateException("크루 리더만 거절 가능합니다.");
+        }
+
+        application.setStatus(ApplicationStatus.REJECTED);
     }
 }
