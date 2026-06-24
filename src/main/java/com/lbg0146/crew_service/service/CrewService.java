@@ -5,6 +5,7 @@ import com.lbg0146.crew_service.domain.Crew;
 import com.lbg0146.crew_service.domain.Member;
 import com.lbg0146.crew_service.domain.enums.Region;
 import com.lbg0146.crew_service.domain.enums.SubCategory;
+import com.lbg0146.crew_service.dto.CrewSearchCondition;
 import com.lbg0146.crew_service.repository.CrewRepository;
 import com.lbg0146.crew_service.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -68,9 +69,17 @@ public class CrewService {
     }
 
     @Transactional
-    public void delete(Long crewId) {
+    public void delete(Long crewId, Long memberId) {
         Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 크루입니다"));
 
+        if (!crew.getLeader().getId().equals(memberId)) {
+            throw new IllegalStateException("크루장만 삭제 가능합니다.");
+        }
+
         crewRepository.delete(crew);
+    }
+
+    public List<Crew> search(CrewSearchCondition condition) {
+        return crewRepository.search(condition);
     }
 }

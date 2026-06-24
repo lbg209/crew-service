@@ -2,6 +2,7 @@ package com.lbg0146.crew_service.controller;
 
 import com.lbg0146.crew_service.dto.CrewCreateRequest;
 import com.lbg0146.crew_service.dto.CrewResponse;
+import com.lbg0146.crew_service.dto.CrewSearchCondition;
 import com.lbg0146.crew_service.dto.CrewUpdateRequest;
 import com.lbg0146.crew_service.domain.Crew;
 import com.lbg0146.crew_service.service.CrewService;
@@ -46,7 +47,15 @@ public class CrewController {
     }
 
     @DeleteMapping("/{crewId}")
-    public void delete(@PathVariable Long crewId) {
-        crewService.delete(crewId);
+    public void delete(@PathVariable Long crewId, @RequestParam Long memberId) {
+        crewService.delete(crewId, memberId);
+    }
+
+    @GetMapping("/search")
+    public List<CrewResponse> search(@ModelAttribute CrewSearchCondition condition) {
+        return crewService.search(condition)
+                .stream()
+                .map((crew)-> new CrewResponse(crew))
+                .toList();
     }
 }

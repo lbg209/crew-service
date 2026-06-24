@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @Transactional
@@ -33,13 +34,7 @@ public class MemberCrewApplicationService {
             throw new IllegalStateException("크루장은 신청할 수 없습니다.");
         }
 
-
-        MemberCrewApplication application = new MemberCrewApplication();
-
-        application.setAppliedAt(LocalDateTime.now());
-        application.setMember(member);
-        application.setCrew(crew);
-        application.setStatus(ApplicationStatus.PENDING);
+        MemberCrewApplication application = MemberCrewApplication.create(member, crew);
 
         applicationRepository.save(application);
 
@@ -49,26 +44,18 @@ public class MemberCrewApplicationService {
     public void approve(Long applicationId, Long leaderId) {
         MemberCrewApplication application = applicationRepository.findById(applicationId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신청입니다"));
 
-        if (application.getStatus() != ApplicationStatus.PENDING) {
-            throw new IllegalStateException("대기중인 신청만 승인 가능합니다.");
-        }
-
         Crew crew = application.getCrew();
 
         if (!crew.getLeader().getId().equals(leaderId)) {
             throw new IllegalStateException("크루 리더만 승인 가능합니다.");
         }
 
-        application.setStatus(ApplicationStatus.APPROVED);
+        application.approve();
         crew.increaseMemberCount();
     }
 
     public void reject(Long applicationId, Long leaderId) {
         MemberCrewApplication application = applicationRepository.findById(applicationId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신청입니다"));
-
-        if (application.getStatus() != ApplicationStatus.PENDING) {
-            throw new IllegalStateException("대기중인 신청만 거절 가능합니다.");
-        }
 
         Crew crew = application.getCrew();
 
@@ -76,6 +63,14 @@ public class MemberCrewApplicationService {
             throw new IllegalStateException("크루 리더만 거절 가능합니다.");
         }
 
-        application.setStatus(ApplicationStatus.REJECTED);
+        application.reject();
+    }
+
+    public List<MemberCrewApplication> findApplicationsByCrew(Long crewId) {
+        return applicationRepository.findByCrewId(crewId);
+    }
+
+    public List<MemberCrewApplication> findApplicationsByMember(Long memberId) {
+        return applicationRepository.findByMemberId(memberId);
     }
 }

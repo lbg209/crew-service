@@ -57,7 +57,7 @@ public class Crew extends BaseEntity{
 
     public void increaseMemberCount() {
         if (currentMemberCount >= maxMemberCount) {
-            throw new IllegalStateException("정원이 초과되었습니다.");
+            throw new IllegalStateException("정원이 가득찼습니다.");
         }
         this.currentMemberCount++;
     }

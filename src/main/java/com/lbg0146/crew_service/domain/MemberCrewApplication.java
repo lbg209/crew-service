@@ -29,4 +29,31 @@ public class MemberCrewApplication {
 
     @Enumerated(EnumType.STRING)
     private ApplicationStatus status;
+
+    public void approve() {
+        if (this.status != ApplicationStatus.PENDING) {
+            throw new IllegalStateException("대기중인 신청만 승인 가능합니다.");
+        }
+
+        this.status = ApplicationStatus.APPROVED;
+    }
+
+    public void reject() {
+        if (this.status != ApplicationStatus.PENDING) {
+            throw new IllegalStateException("대기중인 신청만 거절 가능합니다.");
+        }
+
+        this.status = ApplicationStatus.REJECTED;
+    }
+
+    public static MemberCrewApplication create(Member member, Crew crew) {
+        MemberCrewApplication application = new MemberCrewApplication();
+
+        application.member = member;
+        application.crew = crew;
+        application.appliedAt = LocalDateTime.now();
+        application.status = ApplicationStatus.PENDING;
+
+        return application;
+    }
 }

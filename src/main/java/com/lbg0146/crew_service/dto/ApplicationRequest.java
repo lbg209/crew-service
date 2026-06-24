@@ -7,14 +7,12 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class MemberCrewApplicationUpdateRequest {
+public class ApplicationRequest {
 
-    private Long leaderId;
     private Long memberId;
     private Long crewId;
 
-    public MemberCrewApplicationUpdateRequest(Long leaderId, Long memberId, Long crewId) {
-        this.leaderId = leaderId;
+    public ApplicationRequest(Long memberId, Long crewId) {
         this.memberId = memberId;
         this.crewId = crewId;
     }
