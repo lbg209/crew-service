@@ -1,12 +1,11 @@
 package com.lbg0146.crew_service.controller;
 
-import com.lbg0146.crew_service.dto.CrewCreateRequest;
-import com.lbg0146.crew_service.dto.CrewResponse;
-import com.lbg0146.crew_service.dto.CrewSearchCondition;
-import com.lbg0146.crew_service.dto.CrewUpdateRequest;
+import com.lbg0146.crew_service.dto.*;
 import com.lbg0146.crew_service.domain.Crew;
 import com.lbg0146.crew_service.service.CrewService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,12 +30,10 @@ public class CrewController {
     }
 
     @GetMapping()
-    public List<CrewResponse> findAll() {
-        List<Crew> crews = crewService.findCrews();
+    public Page<CrewResponse> findAll(Pageable pageable) {
+        Page<Crew> crews = crewService.findCrews(pageable);
 
-        return crews.stream()
-                .map((crew) -> new CrewResponse(crew))
-                .toList();
+        return crews.map((crew) -> new CrewResponse(crew));
     }
 
     @PatchMapping("/{crewId}")
@@ -51,11 +48,13 @@ public class CrewController {
         crewService.delete(crewId, memberId);
     }
 
+    @PatchMapping("/{crewId}/recruitment")
+    public void changeRecruitment(@PathVariable Long crewId, @RequestBody RecruitmentStatusRequest request) {
+        crewService.changeRecruitmentStatus(crewId, request.getMemberId(), request.getStatus());
+    }
+
     @GetMapping("/search")
-    public List<CrewResponse> search(@ModelAttribute CrewSearchCondition condition) {
-        return crewService.search(condition)
-                .stream()
-                .map((crew)-> new CrewResponse(crew))
-                .toList();
+    public Page<CrewResponse> search(@ModelAttribute CrewSearchCondition condition, Pageable pageable) {
+        return crewService.search(condition, pageable).map((crew)-> new CrewResponse(crew));
     }
 }

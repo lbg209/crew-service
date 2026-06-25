@@ -5,6 +5,8 @@ import com.lbg0146.crew_service.dto.ApplicationRequest;
 import com.lbg0146.crew_service.dto.ApplicationResponse;
 import com.lbg0146.crew_service.service.MemberCrewApplicationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,21 +34,16 @@ public class MemberCrewApplicationController {
     }
 
     @GetMapping("/crew/{crewId}")
-    public List<ApplicationResponse> findApplicationsCrew(@PathVariable Long crewId) {
-        List<MemberCrewApplication> applications = applicationService.findApplicationsByCrew(crewId);
+    public Page<ApplicationResponse> findApplicationsCrew(@PathVariable Long crewId, Pageable pageable) {
+        Page<MemberCrewApplication> applications = applicationService.findApplicationsByCrew(crewId, pageable);
 
-        return applications.stream()
-                .map((application) -> new ApplicationResponse(application))
-                .toList();
+        return applications.map((application) -> new ApplicationResponse(application));
     }
 
     @GetMapping("/member/{memberId}")
-    public List<ApplicationResponse> findMemberApplications(@PathVariable Long memberId) {
-        List<MemberCrewApplication> applications = applicationService.findApplicationsByMember(memberId);
+    public Page<ApplicationResponse> findMemberApplications(@PathVariable Long memberId, Pageable pageable) {
+        Page<MemberCrewApplication> applications = applicationService.findApplicationsByMember(memberId, pageable);
 
-        return applications.stream()
-                .map((application) -> new ApplicationResponse(application))
-                .toList();
+        return applications.map((application) -> new ApplicationResponse(application));
     }
-
 }

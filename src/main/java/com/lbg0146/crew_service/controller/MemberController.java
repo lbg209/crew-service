@@ -6,6 +6,8 @@ import com.lbg0146.crew_service.dto.MemberUpdateRequest;
 import com.lbg0146.crew_service.domain.Member;
 import com.lbg0146.crew_service.service.MemberService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,12 +33,10 @@ public class MemberController {
     }
 
     @GetMapping
-    public List<MemberResponse> findAll() {
-        List<Member> members = memberService.findMembers();
+    public Page<MemberResponse> findAll(Pageable pageable) {
+        Page<Member> members = memberService.findMembers(pageable);
 
-        return members.stream()
-                .map((member) -> new MemberResponse(member))
-                .toList();
+        return members.map((member) -> new MemberResponse(member));
     }
 
     @PatchMapping("/{memberId}")

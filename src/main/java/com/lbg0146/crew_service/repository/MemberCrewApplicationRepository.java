@@ -1,6 +1,9 @@
 package com.lbg0146.crew_service.repository;
 
 import com.lbg0146.crew_service.domain.MemberCrewApplication;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -10,8 +13,10 @@ public interface MemberCrewApplicationRepository extends JpaRepository<MemberCre
     Optional<MemberCrewApplication> findByMemberIdAndCrewId(Long memberId, Long crewId);
 
     // N+1 발생
-    List<MemberCrewApplication> findByCrewId(Long crewId);
+    @EntityGraph(attributePaths = {"member", "crew"}) // 중복 join 발생
+    Page<MemberCrewApplication> findByCrewId(Long crewId, Pageable pageable);
 
     // N+1 발생
-    List<MemberCrewApplication> findByMemberId(Long memberId);
+    @EntityGraph(attributePaths = {"member", "crew"}) // 중복 join 발생
+    Page<MemberCrewApplication> findByMemberId(Long memberId, Pageable pageable);
 }

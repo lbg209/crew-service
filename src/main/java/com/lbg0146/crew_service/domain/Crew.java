@@ -1,5 +1,6 @@
 package com.lbg0146.crew_service.domain;
 
+import com.lbg0146.crew_service.domain.enums.RecruitmentStatus;
 import com.lbg0146.crew_service.domain.enums.Region;
 import com.lbg0146.crew_service.domain.enums.SubCategory;
 import jakarta.persistence.*;
@@ -33,6 +34,10 @@ public class Crew extends BaseEntity{
     @Column(nullable = false)
     private Region region;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RecruitmentStatus recruitmentStatus = RecruitmentStatus.RECRUITING;
+
     @Column(nullable = false, length = 100)
     private String title;
     @Column(nullable = false)
@@ -60,8 +65,18 @@ public class Crew extends BaseEntity{
             throw new IllegalStateException("정원이 가득찼습니다.");
         }
         this.currentMemberCount++;
+
+        if (currentMemberCount == maxMemberCount) {
+            this.recruitmentStatus = RecruitmentStatus.CLOSED;
+            // 정원이 가득 차면 자동으로 마감상태로 변경
+        }
     }
+
     public void decreaseMemberCount() {
         this.currentMemberCount--;
+    }
+
+    public void changeRecruitmentStatus(RecruitmentStatus status) {
+        this.recruitmentStatus = status;
     }
 }

@@ -1,5 +1,6 @@
 package com.lbg0146.crew_service.service;
 
+import com.lbg0146.crew_service.domain.enums.RecruitmentStatus;
 import com.lbg0146.crew_service.dto.CrewCreateRequest;
 import com.lbg0146.crew_service.domain.Crew;
 import com.lbg0146.crew_service.domain.Member;
@@ -9,6 +10,8 @@ import com.lbg0146.crew_service.dto.CrewSearchCondition;
 import com.lbg0146.crew_service.repository.CrewRepository;
 import com.lbg0146.crew_service.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,8 +39,8 @@ public class CrewService {
         return crew.getId();
     }
 
-    public List<Crew> findCrews() {
-        return crewRepository.findAll();
+    public Page<Crew> findCrews(Pageable pageable) {
+        return crewRepository.findAll(pageable);
     }
 
     public Crew findOne(Long crewId) {
@@ -65,7 +68,6 @@ public class CrewService {
         crew.setTitle(title);
         crew.setDescription(description);
         crew.setMaxMemberCount(maxMemberCount);
-
     }
 
     @Transactional
@@ -79,7 +81,18 @@ public class CrewService {
         crewRepository.delete(crew);
     }
 
-    public List<Crew> search(CrewSearchCondition condition) {
-        return crewRepository.search(condition);
+    @Transactional
+    public void changeRecruitmentStatus(Long crewId, Long memberId, RecruitmentStatus status) {
+        Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 크루입니다."));
+
+        if (!crew.getLeader().getId().equals(memberId)) {
+            throw new IllegalStateException("크루장만 변경 가능합니다.");
+        }
+
+        crew.changeRecruitmentStatus(status);
+    }
+
+    public Page<Crew> search(CrewSearchCondition condition, Pageable pageable) {
+        return crewRepository.search(condition, pageable);
     }
 }

@@ -1,14 +1,16 @@
 package com.lbg0146.crew_service.repository;
 
 import com.lbg0146.crew_service.domain.Crew;
-import com.lbg0146.crew_service.domain.QCrew;
+import com.lbg0146.crew_service.domain.enums.RecruitmentStatus;
 import com.lbg0146.crew_service.domain.enums.Region;
 import com.lbg0146.crew_service.domain.enums.SubCategory;
 import com.lbg0146.crew_service.dto.CrewSearchCondition;
-import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
@@ -23,16 +25,34 @@ public class CrewRepositoryImpl implements CrewRepositoryCustom{
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<Crew> search(CrewSearchCondition condition) {
-        return queryFactory
+    public Page<Crew> search(CrewSearchCondition condition, Pageable pageable) {
+        List<Crew> content = queryFactory
                 .selectFrom(crew)
                 .where(
                         regionEq(condition.getRegion()),
                         subCategoryEq(condition.getSubCategory()),
-                        titleContains(condition.getTitle())
+                        titleContains(condition.getTitle()),
+                        recruitmentStatusEq(condition.getRecruitmentStatus())
                 )
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
                 .fetch();
+
+        Long count = queryFactory
+                .select(crew.count())
+                .from(crew)
+                .where(
+                        regionEq(condition.getRegion()),
+                        subCategoryEq(condition.getSubCategory()),
+                        titleContains(condition.getTitle()),
+                        recruitmentStatusEq(condition.getRecruitmentStatus())
+                )
+                .fetchOne();
+
+        return new PageImpl<>(content, pageable, count);
     }
+
+
 
     private BooleanExpression regionEq(Region region) {
         return region != null ? crew.region.eq(region) : null;
@@ -44,5 +64,9 @@ public class CrewRepositoryImpl implements CrewRepositoryCustom{
 
     private BooleanExpression titleContains(String title) {
         return StringUtils.hasText(title) ? crew.title.contains(title) : null;
+    }
+
+    private BooleanExpression recruitmentStatusEq(RecruitmentStatus status) {
+        return status != null ? crew.recruitmentStatus.eq(status) : null;
     }
 }

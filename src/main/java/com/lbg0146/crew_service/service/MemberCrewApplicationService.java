@@ -3,11 +3,13 @@ package com.lbg0146.crew_service.service;
 import com.lbg0146.crew_service.domain.Crew;
 import com.lbg0146.crew_service.domain.Member;
 import com.lbg0146.crew_service.domain.MemberCrewApplication;
-import com.lbg0146.crew_service.domain.enums.ApplicationStatus;
+import com.lbg0146.crew_service.domain.enums.RecruitmentStatus;
 import com.lbg0146.crew_service.repository.CrewRepository;
 import com.lbg0146.crew_service.repository.MemberCrewApplicationRepository;
 import com.lbg0146.crew_service.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,11 @@ public class MemberCrewApplicationService {
 
         Member member = memberRepository.findById(memberId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
         Crew crew = crewRepository.findById(crewId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 크루입니다."));
+
+        if (crew.getRecruitmentStatus() == RecruitmentStatus.CLOSED) {
+            throw new IllegalStateException("모집이 마감된 크루입니다.");
+        }
+
         if (crew.getLeader().getId().equals(memberId)) {
             throw new IllegalStateException("크루장은 신청할 수 없습니다.");
         }
@@ -66,11 +73,11 @@ public class MemberCrewApplicationService {
         application.reject();
     }
 
-    public List<MemberCrewApplication> findApplicationsByCrew(Long crewId) {
-        return applicationRepository.findByCrewId(crewId);
+    public Page<MemberCrewApplication> findApplicationsByCrew(Long crewId, Pageable pageable) {
+        return applicationRepository.findByCrewId(crewId, pageable);
     }
 
-    public List<MemberCrewApplication> findApplicationsByMember(Long memberId) {
-        return applicationRepository.findByMemberId(memberId);
+    public Page<MemberCrewApplication> findApplicationsByMember(Long memberId, Pageable pageable) {
+        return applicationRepository.findByMemberId(memberId, pageable);
     }
 }

@@ -4,6 +4,8 @@ import com.lbg0146.crew_service.dto.MemberCreateRequest;
 import com.lbg0146.crew_service.domain.Member;
 import com.lbg0146.crew_service.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,8 +27,8 @@ public class MemberService {
         return member.getId();
     }
 
-    public List<Member> findMembers() {
-        return memberRepository.findAll();
+    public Page<Member> findMembers(Pageable pageable) {
+        return memberRepository.findAll(pageable);
     }
 
     public Member findOne(Long memberId) {
