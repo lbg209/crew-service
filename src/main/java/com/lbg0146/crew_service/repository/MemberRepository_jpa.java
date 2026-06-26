@@ -6,7 +6,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-
+/*
+    JPA 테스트 Repository
+ */
 @Repository
 @RequiredArgsConstructor
 public class MemberRepository_jpa {

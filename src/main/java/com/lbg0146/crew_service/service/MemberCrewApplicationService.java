@@ -4,6 +4,7 @@ import com.lbg0146.crew_service.domain.Crew;
 import com.lbg0146.crew_service.domain.Member;
 import com.lbg0146.crew_service.domain.MemberCrewApplication;
 import com.lbg0146.crew_service.domain.enums.RecruitmentStatus;
+import com.lbg0146.crew_service.exception.*;
 import com.lbg0146.crew_service.repository.CrewRepository;
 import com.lbg0146.crew_service.repository.MemberCrewApplicationRepository;
 import com.lbg0146.crew_service.repository.MemberRepository;
@@ -27,18 +28,18 @@ public class MemberCrewApplicationService {
 
     public Long apply(Long memberId, Long crewId) {
         if (applicationRepository.findByMemberIdAndCrewId(memberId, crewId).isPresent()){
-            throw new IllegalStateException("이미 신청한 크루입니다.");
+            throw new DuplicateApplicationException();
         }
 
-        Member member = memberRepository.findById(memberId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
-        Crew crew = crewRepository.findById(crewId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 크루입니다."));
+        Member member = memberRepository.findById(memberId).orElseThrow(()-> new MemberNotFoundException());
+        Crew crew = crewRepository.findById(crewId).orElseThrow(()-> new CrewNotFoundException());
 
         if (crew.getRecruitmentStatus() == RecruitmentStatus.CLOSED) {
             throw new IllegalStateException("모집이 마감된 크루입니다.");
         }
 
         if (crew.getLeader().getId().equals(memberId)) {
-            throw new IllegalStateException("크루장은 신청할 수 없습니다.");
+            throw new UnauthorizedException("크루장은 신청할 수 없습니다.");
         }
 
         MemberCrewApplication application = MemberCrewApplication.create(member, crew);
@@ -49,12 +50,12 @@ public class MemberCrewApplicationService {
     }
 
     public void approve(Long applicationId, Long leaderId) {
-        MemberCrewApplication application = applicationRepository.findById(applicationId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신청입니다"));
+        MemberCrewApplication application = applicationRepository.findById(applicationId).orElseThrow(() -> new ApplicationNotFoundException());
 
         Crew crew = application.getCrew();
 
         if (!crew.getLeader().getId().equals(leaderId)) {
-            throw new IllegalStateException("크루 리더만 승인 가능합니다.");
+            throw new UnauthorizedException("크루 리더만 승인 가능합니다.");
         }
 
         application.approve();
@@ -62,12 +63,12 @@ public class MemberCrewApplicationService {
     }
 
     public void reject(Long applicationId, Long leaderId) {
-        MemberCrewApplication application = applicationRepository.findById(applicationId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신청입니다"));
+        MemberCrewApplication application = applicationRepository.findById(applicationId).orElseThrow(() -> new ApplicationNotFoundException());
 
         Crew crew = application.getCrew();
 
         if (!crew.getLeader().getId().equals(leaderId)) {
-            throw new IllegalStateException("크루 리더만 거절 가능합니다.");
+            throw new UnauthorizedException("크루 리더만 거절 가능합니다.");
         }
 
         application.reject();

@@ -2,6 +2,7 @@ package com.lbg0146.crew_service.service;
 
 import com.lbg0146.crew_service.dto.MemberCreateRequest;
 import com.lbg0146.crew_service.domain.Member;
+import com.lbg0146.crew_service.exception.MemberNotFoundException;
 import com.lbg0146.crew_service.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -32,12 +33,12 @@ public class MemberService {
     }
 
     public Member findOne(Long memberId) {
-        return memberRepository.findById(memberId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
+        return memberRepository.findById(memberId).orElseThrow(()-> new MemberNotFoundException());
     }
 
     @Transactional
     public void update(Long id, String nickname) {
-        Member member = memberRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+        Member member = memberRepository.findById(id).orElseThrow(() -> new MemberNotFoundException());
 
         // 더티 체킹 메서드가 끝나면 트랜잭션 커밋
         member.setNickname(nickname);
@@ -45,7 +46,7 @@ public class MemberService {
 
     @Transactional
     public void delete(Long id) {
-        Member member = memberRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+        Member member = memberRepository.findById(id).orElseThrow(() -> new MemberNotFoundException());
 
         memberRepository.delete(member);
     }

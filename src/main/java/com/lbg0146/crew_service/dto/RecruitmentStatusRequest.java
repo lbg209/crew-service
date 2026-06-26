@@ -10,7 +10,4 @@ public class RecruitmentStatusRequest {
 
     private Long memberId;
     private RecruitmentStatus status;
-
-
-
 }

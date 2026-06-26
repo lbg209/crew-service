@@ -7,6 +7,10 @@ import com.lbg0146.crew_service.domain.Member;
 import com.lbg0146.crew_service.domain.enums.Region;
 import com.lbg0146.crew_service.domain.enums.SubCategory;
 import com.lbg0146.crew_service.dto.CrewSearchCondition;
+import com.lbg0146.crew_service.exception.CrewNotFoundException;
+import com.lbg0146.crew_service.exception.InvalidMemberCountException;
+import com.lbg0146.crew_service.exception.MemberNotFoundException;
+import com.lbg0146.crew_service.exception.UnauthorizedException;
 import com.lbg0146.crew_service.repository.CrewRepository;
 import com.lbg0146.crew_service.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +35,7 @@ public class CrewService {
             throw new IllegalArgumentException("최대 인원은 1이어야합니다.");
         }
 
-        Member member = memberRepository.findById(request.getMemberId()).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
+        Member member = memberRepository.findById(request.getMemberId()).orElseThrow(()-> new MemberNotFoundException());
 
         Crew crew = new Crew(member, request.getSubCategory(), request.getRegion(), request.getTitle(), request.getDescription(), request.getMaxMemberCount());
 
@@ -44,23 +48,23 @@ public class CrewService {
     }
 
     public Crew findOne(Long crewId) {
-        return crewRepository.findById(crewId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 크루입니다"));
+        return crewRepository.findById(crewId).orElseThrow(() -> new CrewNotFoundException());
     }
 
     @Transactional
     public void update(Long crewId, Long memberId,SubCategory subCategory, Region region, String title, String description, int maxMemberCount) {
-        Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 크루입니다"));
+        Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new CrewNotFoundException());
 
         if (!crew.getLeader().getId().equals(memberId)){
-            throw new IllegalArgumentException("크루장만 수정 가능합니다.");
+            throw new UnauthorizedException("크루장만 수정 가능합니다.");
         }
 
         if (maxMemberCount < crew.getCurrentMemberCount()) {
-            throw new IllegalArgumentException("현재 인원보다 적게 설정할 수 없습니다.");
+            throw new InvalidMemberCountException("현재 인원보다 적게 설정할 수 없습니다.");
         }
 
         if (maxMemberCount <= 0) {
-            throw new IllegalArgumentException("최대 인원은 1명보다 적게 설정할 수 없습니다.");
+            throw new InvalidMemberCountException("최대 인원은 1명 이상이어야 합니다.");
         }
 
         crew.setSubCategory(subCategory);
@@ -72,10 +76,10 @@ public class CrewService {
 
     @Transactional
     public void delete(Long crewId, Long memberId) {
-        Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 크루입니다"));
+        Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new CrewNotFoundException());
 
         if (!crew.getLeader().getId().equals(memberId)) {
-            throw new IllegalStateException("크루장만 삭제 가능합니다.");
+            throw new UnauthorizedException("크루장만 삭제 가능합니다.");
         }
 
         crewRepository.delete(crew);
@@ -83,10 +87,10 @@ public class CrewService {
 
     @Transactional
     public void changeRecruitmentStatus(Long crewId, Long memberId, RecruitmentStatus status) {
-        Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 크루입니다."));
+        Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new CrewNotFoundException());
 
         if (!crew.getLeader().getId().equals(memberId)) {
-            throw new IllegalStateException("크루장만 변경 가능합니다.");
+            throw new UnauthorizedException("크루장만 변경 가능합니다.");
         }
 
         crew.changeRecruitmentStatus(status);
