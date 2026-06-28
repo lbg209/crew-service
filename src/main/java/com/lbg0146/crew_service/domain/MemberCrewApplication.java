@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@Setter
 @Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"member_id", "crew_id"})})
 public class MemberCrewApplication {
 

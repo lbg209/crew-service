@@ -3,13 +3,14 @@ package com.lbg0146.crew_service.controller;
 import com.lbg0146.crew_service.dto.*;
 import com.lbg0146.crew_service.domain.Crew;
 import com.lbg0146.crew_service.service.CrewService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
+@Tag(name = "Crew API", description = "크루 관련 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/crews")
@@ -17,11 +18,13 @@ public class CrewController {
 
     private final CrewService crewService;
 
+    @Operation(summary = "크루 생성", description = "입력된 데이터를 받아 새로운 크루가 생성되며 생성한 멤버가 리더로 설정됩니다.")
     @PostMapping()
     public Long create(@RequestBody CrewCreateRequest request) {
         return crewService.createCrew(request);
     }
 
+    @Operation(summary = "단일 크루 조회")
     @GetMapping("/{crewId}")
     public CrewResponse findOne(@PathVariable Long crewId) {
         Crew crew = crewService.findOne(crewId);
@@ -29,6 +32,7 @@ public class CrewController {
         return new CrewResponse(crew);
     }
 
+    @Operation(summary = "전체 크루 조회")
     @GetMapping()
     public Page<CrewResponse> findAll(Pageable pageable) {
         Page<Crew> crews = crewService.findCrews(pageable);
@@ -36,6 +40,7 @@ public class CrewController {
         return crews.map((crew) -> new CrewResponse(crew));
     }
 
+    @Operation(summary = "크루 정보 변경", description = "크루 정보를 수정합니다. 리더만 수정할 수 있으며 일부 필드는 변경 제한이 있습니다.")
     @PatchMapping("/{crewId}")
     public CrewResponse update(@PathVariable Long crewId, @RequestBody CrewUpdateRequest request) {
         crewService.update(crewId, request.getMemberId(), request.getSubCategory(), request.getRegion(), request.getTitle(), request.getDescription(), request.getMaxMemberCount());
@@ -43,18 +48,33 @@ public class CrewController {
         return new CrewResponse(crewService.findOne(crewId));
     }
 
+    @Operation(summary = "크루 삭제")
     @DeleteMapping("/{crewId}")
     public void delete(@PathVariable Long crewId, @RequestParam Long memberId) {
         crewService.delete(crewId, memberId);
     }
 
+    @Operation(summary = "크루 모집 상태 변경", description = "모집, 마감 상태가 있으며 리더만 변경가능합니다.")
     @PatchMapping("/{crewId}/recruitment")
     public void changeRecruitment(@PathVariable Long crewId, @RequestBody RecruitmentStatusRequest request) {
         crewService.changeRecruitmentStatus(crewId, request.getMemberId(), request.getStatus());
     }
 
+    @Operation(summary = "크루 조건 검색", description = "조건 DTO를 통해 해당 조건의 크루 검색합니다.")
     @GetMapping("/search")
     public Page<CrewResponse> search(@ModelAttribute CrewSearchCondition condition, Pageable pageable) {
         return crewService.search(condition, pageable).map((crew)-> new CrewResponse(crew));
+    }
+
+    @Operation(summary = "크루 탈퇴", description = "APPROVED 상태의 멤버만 크루 탈퇴 가능합니다.")
+    @DeleteMapping("/{crewId}/leave")
+    public void leave(@PathVariable Long crewId, @RequestParam Long memberId) {
+        crewService.leave(crewId, memberId);
+    }
+
+    @Operation(summary = "크루 리더 변경", description = "크루장을 통해 리더 변경합니다.")
+    @PatchMapping("{crewId}/leader")
+    public void changeLeader(@PathVariable Long crewId, @RequestBody CrewLeaderChangeRequest request) {
+        crewService.changeLeader(crewId, request);
     }
 }

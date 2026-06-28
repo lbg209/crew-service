@@ -3,6 +3,7 @@ package com.lbg0146.crew_service.service;
 import com.lbg0146.crew_service.domain.Crew;
 import com.lbg0146.crew_service.domain.Member;
 import com.lbg0146.crew_service.domain.MemberCrewApplication;
+import com.lbg0146.crew_service.domain.enums.ApplicationStatus;
 import com.lbg0146.crew_service.domain.enums.RecruitmentStatus;
 import com.lbg0146.crew_service.exception.*;
 import com.lbg0146.crew_service.repository.CrewRepository;
@@ -13,9 +14,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @Transactional
@@ -74,11 +72,25 @@ public class MemberCrewApplicationService {
         application.reject();
     }
 
-    public Page<MemberCrewApplication> findApplicationsByCrew(Long crewId, Pageable pageable) {
-        return applicationRepository.findByCrewId(crewId, pageable);
+    public Page<MemberCrewApplication> findApplicationsByCrew(Long crewId, ApplicationStatus status, Pageable pageable) {
+        return applicationRepository.searchByCrew(crewId, status, pageable);
     }
 
-    public Page<MemberCrewApplication> findApplicationsByMember(Long memberId, Pageable pageable) {
-        return applicationRepository.findByMemberId(memberId, pageable);
+    public Page<MemberCrewApplication> findApplicationsByMember(Long memberId,ApplicationStatus status , Pageable pageable) {
+        return applicationRepository.searchByMember(memberId, status, pageable);
+    }
+
+    public void cancel(Long applicationId, Long memberId) {
+        MemberCrewApplication application = applicationRepository.findById(applicationId).orElseThrow(() -> new ApplicationNotFoundException());
+
+        if (!application.getMember().getId().equals(memberId)){
+            throw new UnauthorizedException("본인의 신청만 취소할 수 있습니다");
+        }
+
+        if (application.getStatus() != ApplicationStatus.PENDING) {
+            throw new IllegalStateException("대기 중인 신청만 취소할 수 있습니다.");
+        }
+
+        applicationRepository.delete(application);
     }
 }

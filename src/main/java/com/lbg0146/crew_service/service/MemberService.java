@@ -41,7 +41,7 @@ public class MemberService {
         Member member = memberRepository.findById(id).orElseThrow(() -> new MemberNotFoundException());
 
         // 더티 체킹 메서드가 끝나면 트랜잭션 커밋
-        member.setNickname(nickname);
+        member.update(nickname);
     }
 
     @Transactional

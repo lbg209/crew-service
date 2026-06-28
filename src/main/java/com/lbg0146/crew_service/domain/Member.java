@@ -8,7 +8,6 @@ import java.util.List;
 
 @Entity
 @Getter
-@Setter
 public class Member extends BaseEntity{
 
     @Id
@@ -36,5 +35,9 @@ public class Member extends BaseEntity{
         this.loginId = loginId;
         this.password = password;
         this.nickname = nickname;
+    }
+
+    public void update(String nickName) {
+        this.nickname = nickName;
     }
 }

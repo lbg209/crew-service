@@ -3,15 +3,14 @@ package com.lbg0146.crew_service.domain;
 import com.lbg0146.crew_service.domain.enums.RecruitmentStatus;
 import com.lbg0146.crew_service.domain.enums.Region;
 import com.lbg0146.crew_service.domain.enums.SubCategory;
+import com.lbg0146.crew_service.exception.InvalidMemberCountException;
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.Setter;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Getter
-@Setter
 public class Crew extends BaseEntity{
 
     @Id
@@ -62,7 +61,7 @@ public class Crew extends BaseEntity{
 
     public void increaseMemberCount() {
         if (currentMemberCount >= maxMemberCount) {
-            throw new IllegalStateException("정원이 가득찼습니다.");
+            throw new InvalidMemberCountException("정원이 가득찼습니다.");
         }
         this.currentMemberCount++;
 
@@ -73,10 +72,30 @@ public class Crew extends BaseEntity{
     }
 
     public void decreaseMemberCount() {
+        if (currentMemberCount <= 1) {
+            throw new InvalidMemberCountException("더 이상 인원을 감소시킬 수 없습니다.");
+        }
         this.currentMemberCount--;
+
+        if (recruitmentStatus == RecruitmentStatus.CLOSED) {
+            recruitmentStatus = RecruitmentStatus.RECRUITING;
+            // 정원이 줄어들면 자동으로 모집상태로 변경
+        }
     }
 
     public void changeRecruitmentStatus(RecruitmentStatus status) {
         this.recruitmentStatus = status;
+    }
+
+    public void update(SubCategory subCategory, Region region, String title, String description, int maxMemberCount) {
+        this.subCategory = subCategory;
+        this.region = region;
+        this.title = title;
+        this.description = description;
+        this.maxMemberCount = maxMemberCount;
+    }
+
+    public void changeLeader(Member member) {
+        this.leader = member;
     }
 }

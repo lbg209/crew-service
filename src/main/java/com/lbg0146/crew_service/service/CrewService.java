@@ -1,25 +1,24 @@
 package com.lbg0146.crew_service.service;
 
+import com.lbg0146.crew_service.domain.MemberCrewApplication;
+import com.lbg0146.crew_service.domain.enums.ApplicationStatus;
 import com.lbg0146.crew_service.domain.enums.RecruitmentStatus;
 import com.lbg0146.crew_service.dto.CrewCreateRequest;
 import com.lbg0146.crew_service.domain.Crew;
 import com.lbg0146.crew_service.domain.Member;
 import com.lbg0146.crew_service.domain.enums.Region;
 import com.lbg0146.crew_service.domain.enums.SubCategory;
+import com.lbg0146.crew_service.dto.CrewLeaderChangeRequest;
 import com.lbg0146.crew_service.dto.CrewSearchCondition;
-import com.lbg0146.crew_service.exception.CrewNotFoundException;
-import com.lbg0146.crew_service.exception.InvalidMemberCountException;
-import com.lbg0146.crew_service.exception.MemberNotFoundException;
-import com.lbg0146.crew_service.exception.UnauthorizedException;
+import com.lbg0146.crew_service.exception.*;
 import com.lbg0146.crew_service.repository.CrewRepository;
+import com.lbg0146.crew_service.repository.MemberCrewApplicationRepository;
 import com.lbg0146.crew_service.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
@@ -28,6 +27,7 @@ public class CrewService {
 
     private final CrewRepository crewRepository;
     private final MemberRepository memberRepository;
+    private final MemberCrewApplicationRepository applicationRepository;
 
     @Transactional
     public Long createCrew(CrewCreateRequest request) {
@@ -52,7 +52,7 @@ public class CrewService {
     }
 
     @Transactional
-    public void update(Long crewId, Long memberId,SubCategory subCategory, Region region, String title, String description, int maxMemberCount) {
+    public void update(Long crewId, Long memberId, SubCategory subCategory, Region region, String title, String description, int maxMemberCount) {
         Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new CrewNotFoundException());
 
         if (!crew.getLeader().getId().equals(memberId)){
@@ -67,11 +67,7 @@ public class CrewService {
             throw new InvalidMemberCountException("최대 인원은 1명 이상이어야 합니다.");
         }
 
-        crew.setSubCategory(subCategory);
-        crew.setRegion(region);
-        crew.setTitle(title);
-        crew.setDescription(description);
-        crew.setMaxMemberCount(maxMemberCount);
+        crew.update(subCategory, region, title, description, maxMemberCount);
     }
 
     @Transactional
@@ -82,6 +78,7 @@ public class CrewService {
             throw new UnauthorizedException("크루장만 삭제 가능합니다.");
         }
 
+        applicationRepository.deleteByCrewId(crewId);
         crewRepository.delete(crew);
     }
 
@@ -98,5 +95,61 @@ public class CrewService {
 
     public Page<Crew> search(CrewSearchCondition condition, Pageable pageable) {
         return crewRepository.search(condition, pageable);
+    }
+
+    @Transactional
+    public void leave(Long crewId, Long memberId) {
+        Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new CrewNotFoundException());
+        MemberCrewApplication application = applicationRepository.findByMemberIdAndCrewId(memberId, crewId).orElseThrow(() -> new ApplicationNotFoundException());
+
+        if (crew.getLeader().getId().equals(memberId)){
+            throw new UnauthorizedException("크루장은 탈퇴 불가능합니다 크루장을 변경해주세요.");
+        }
+
+        if (application.getStatus() != ApplicationStatus.APPROVED) {
+            throw new IllegalStateException("승인된 회원만 탈퇴할 수 있습니다.");
+        }
+
+        crew.decreaseMemberCount();
+        applicationRepository.delete(application);
+    }
+
+    @Transactional
+    public void changeLeader(Long crewId, CrewLeaderChangeRequest request) {
+        Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new CrewNotFoundException());
+
+        if (!crew.getLeader().getId().equals(request.getLeaderId())) {
+            throw new UnauthorizedException("크루장만 변경할 수 있습니다.");
+        }
+
+        if (request.getLeaderId().equals(request.getNewLeaderId())) {
+            throw new IllegalArgumentException("이미 현재 크루장입니다.");
+        }
+
+        MemberCrewApplication application = applicationRepository.findByMemberIdAndCrewId(request.getNewLeaderId(), crewId).orElseThrow(() -> new ApplicationNotFoundException());
+
+        if (application.getStatus() != ApplicationStatus.APPROVED) {
+            throw new IllegalStateException("승인된 회원만 크루장이 될 수 있습니다.");
+        }
+
+        createLeaderApplication(crew, request.getLeaderId()); // 기존 리더가 신청이 없다면 새로 생성
+
+        Member member = memberRepository.findById(request.getNewLeaderId()).orElseThrow(() -> new MemberNotFoundException());
+        crew.changeLeader(member);
+    }
+
+    private void createLeaderApplication(Crew crew, Long oldLeaderId) {
+        MemberCrewApplication oldLeaderApplication =
+                applicationRepository.findByMemberIdAndCrewId(oldLeaderId, crew.getId())
+                        .orElse(null);
+
+        if (oldLeaderApplication == null) {
+            MemberCrewApplication newApplication =
+                    MemberCrewApplication.create(crew.getLeader(), crew);
+
+            newApplication.approve();
+
+            applicationRepository.save(newApplication);
+        }
     }
 }
