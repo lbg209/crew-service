@@ -26,8 +26,8 @@ class CrewServiceTest {
         MemberCreateRequest member = new MemberCreateRequest("lbg", "1234", "LEE");
         Long saveId = memberService.join(member);
 
-        CrewCreateRequest crewCreateRequest = new CrewCreateRequest(saveId, SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", 10);
-        Long createId = crewService.createCrew(crewCreateRequest);
+        CrewCreateRequest crewCreateRequest = new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", 10);
+        Long createId = crewService.createCrew(saveId ,crewCreateRequest);
         Crew findCrew = crewService.findOne(createId);
 
         assertThat(findCrew.getTitle()).isEqualTo("축구크루");
@@ -39,9 +39,9 @@ class CrewServiceTest {
 
     @Test
     public void 존재하지_않는_회원으로_크루생성() {
-        CrewCreateRequest crewCreateRequest = new CrewCreateRequest(1L, SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", 10);
+        CrewCreateRequest crewCreateRequest = new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", 10);
 
-        assertThatThrownBy(() -> crewService.createCrew(crewCreateRequest))
+        assertThatThrownBy(() -> crewService.createCrew(999L, crewCreateRequest))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

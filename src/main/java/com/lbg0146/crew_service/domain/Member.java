@@ -1,5 +1,6 @@
 package com.lbg0146.crew_service.domain;
 
+import com.lbg0146.crew_service.domain.enums.Role;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,6 +25,10 @@ public class Member extends BaseEntity{
     @Column(nullable = false, unique = true)
     private String nickname;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
     @OneToMany(mappedBy = "member")
     private List<MemberCrewApplication> applications = new ArrayList<>();
 
@@ -35,6 +40,7 @@ public class Member extends BaseEntity{
         this.loginId = loginId;
         this.password = password;
         this.nickname = nickname;
+        this.role = Role.ROLE_USER;
     }
 
     public void update(String nickName) {

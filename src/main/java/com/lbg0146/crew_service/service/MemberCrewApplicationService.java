@@ -72,11 +72,17 @@ public class MemberCrewApplicationService {
         application.reject();
     }
 
-    public Page<MemberCrewApplication> findApplicationsByCrew(Long crewId, ApplicationStatus status, Pageable pageable) {
+    public Page<MemberCrewApplication> findApplicationsByCrew(Long crewId,Long memberId , ApplicationStatus status, Pageable pageable) {
+        Crew crew = crewRepository.findById(crewId).orElseThrow(()-> new CrewNotFoundException());
+
+        if (!crew.getLeader().getId().equals(memberId)) {
+            throw new UnauthorizedException("크루장만 조회 가능합니다.");
+        }
+
         return applicationRepository.searchByCrew(crewId, status, pageable);
     }
 
-    public Page<MemberCrewApplication> findApplicationsByMember(Long memberId,ApplicationStatus status , Pageable pageable) {
+    public Page<MemberCrewApplication> findApplicationsByMember(Long memberId, ApplicationStatus status , Pageable pageable) {
         return applicationRepository.searchByMember(memberId, status, pageable);
     }
 

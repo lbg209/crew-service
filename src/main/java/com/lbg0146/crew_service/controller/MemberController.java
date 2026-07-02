@@ -4,13 +4,17 @@ import com.lbg0146.crew_service.dto.MemberCreateRequest;
 import com.lbg0146.crew_service.dto.MemberResponse;
 import com.lbg0146.crew_service.dto.MemberUpdateRequest;
 import com.lbg0146.crew_service.domain.Member;
+import com.lbg0146.crew_service.security.CustomUserDetails;
 import com.lbg0146.crew_service.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Member API", description = "회원 관련 API")
@@ -23,7 +27,7 @@ public class MemberController {
 
     @Operation(summary = "회원 가입", description = "아이디와 닉네임을 입력받아 새로운 회원을 생성합니다.")
     @PostMapping
-    public Long join(@RequestBody MemberCreateRequest request) {
+    public Long join(@Valid @RequestBody MemberCreateRequest request) {
 
         return memberService.join(request);
     }
@@ -45,16 +49,17 @@ public class MemberController {
     }
 
     @Operation(summary = "회원 정보 변경", description = "닉네임을 변경합니다.")
-    @PatchMapping("/{memberId}")
-    public MemberResponse update(@PathVariable Long memberId, @RequestBody MemberUpdateRequest request) {
-        memberService.update(memberId, request.getNickname());
+    @PatchMapping("/me")
+    public MemberResponse update(@Valid @RequestBody MemberUpdateRequest request, @AuthenticationPrincipal CustomUserDetails user) {
 
-        return new MemberResponse(memberService.findOne(memberId));
+        Member updateMember = memberService.update(user.getId(), request.getNickname());
+
+        return new MemberResponse(updateMember);
     }
 
     @Operation(summary = "회원 삭제")
-    @DeleteMapping("/{memberId}")
-    public void delete(@PathVariable Long memberId) {
-        memberService.delete(memberId);
+    @DeleteMapping("/me")
+    public void delete(@AuthenticationPrincipal CustomUserDetails user) {
+        memberService.delete(user.getId());
     }
 }

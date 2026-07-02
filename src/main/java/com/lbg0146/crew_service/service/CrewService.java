@@ -30,12 +30,9 @@ public class CrewService {
     private final MemberCrewApplicationRepository applicationRepository;
 
     @Transactional
-    public Long createCrew(CrewCreateRequest request) {
-        if (request.getMaxMemberCount() <= 0) {
-            throw new IllegalArgumentException("최대 인원은 1이어야합니다.");
-        }
+    public Long createCrew(Long memberId, CrewCreateRequest request) {
 
-        Member member = memberRepository.findById(request.getMemberId()).orElseThrow(()-> new MemberNotFoundException());
+        Member member = memberRepository.findById(memberId).orElseThrow(()-> new MemberNotFoundException());
 
         Crew crew = new Crew(member, request.getSubCategory(), request.getRegion(), request.getTitle(), request.getDescription(), request.getMaxMemberCount());
 
@@ -52,7 +49,7 @@ public class CrewService {
     }
 
     @Transactional
-    public void update(Long crewId, Long memberId, SubCategory subCategory, Region region, String title, String description, int maxMemberCount) {
+    public Crew update(Long crewId, Long memberId, SubCategory subCategory, Region region, String title, String description, int maxMemberCount) {
         Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new CrewNotFoundException());
 
         if (!crew.getLeader().getId().equals(memberId)){
@@ -63,11 +60,9 @@ public class CrewService {
             throw new InvalidMemberCountException("현재 인원보다 적게 설정할 수 없습니다.");
         }
 
-        if (maxMemberCount <= 0) {
-            throw new InvalidMemberCountException("최대 인원은 1명 이상이어야 합니다.");
-        }
-
         crew.update(subCategory, region, title, description, maxMemberCount);
+
+        return crew;
     }
 
     @Transactional
@@ -115,37 +110,40 @@ public class CrewService {
     }
 
     @Transactional
-    public void changeLeader(Long crewId, CrewLeaderChangeRequest request) {
+    public void changeLeader(Long crewId, Long memberId, Long newLeaderId) {
         Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new CrewNotFoundException());
+        Member currentLeader = crew.getLeader();
 
-        if (!crew.getLeader().getId().equals(request.getLeaderId())) {
+
+        if (!currentLeader.getId().equals(memberId)) {
             throw new UnauthorizedException("크루장만 변경할 수 있습니다.");
         }
 
-        if (request.getLeaderId().equals(request.getNewLeaderId())) {
+        if (currentLeader.getId().equals(newLeaderId)) {
             throw new IllegalArgumentException("이미 현재 크루장입니다.");
         }
 
-        MemberCrewApplication application = applicationRepository.findByMemberIdAndCrewId(request.getNewLeaderId(), crewId).orElseThrow(() -> new ApplicationNotFoundException());
+        MemberCrewApplication application = applicationRepository.findByMemberIdAndCrewId(newLeaderId, crewId).orElseThrow(() -> new ApplicationNotFoundException());
 
         if (application.getStatus() != ApplicationStatus.APPROVED) {
             throw new IllegalStateException("승인된 회원만 크루장이 될 수 있습니다.");
         }
 
-        createLeaderApplication(crew, request.getLeaderId()); // 기존 리더가 신청이 없다면 새로 생성
+        createLeaderApplication(crew, currentLeader); // 기존 리더가 신청이 없다면 새로 생성
 
-        Member member = memberRepository.findById(request.getNewLeaderId()).orElseThrow(() -> new MemberNotFoundException());
-        crew.changeLeader(member);
+        Member newLeader = memberRepository.findById(newLeaderId).orElseThrow(MemberNotFoundException::new);
+
+        crew.changeLeader(newLeader);
     }
 
-    private void createLeaderApplication(Crew crew, Long oldLeaderId) {
+    private void createLeaderApplication(Crew crew, Member oldLeader) {
         MemberCrewApplication oldLeaderApplication =
-                applicationRepository.findByMemberIdAndCrewId(oldLeaderId, crew.getId())
+                applicationRepository.findByMemberIdAndCrewId(oldLeader.getId(), crew.getId())
                         .orElse(null);
 
         if (oldLeaderApplication == null) {
             MemberCrewApplication newApplication =
-                    MemberCrewApplication.create(crew.getLeader(), crew);
+                    MemberCrewApplication.create(oldLeader, crew);
 
             newApplication.approve();
 

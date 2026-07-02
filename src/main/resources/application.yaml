@@ -22,6 +22,9 @@ spring:
         default-page-size: 10
         max-page-size: 100
 
+  jwt:
+    secret: vmfhaltmskdlstkfkdgodyroqkfwkdbalroqkfwkdbalbagdbgabkabnngawtatqrthqhhyqarh
+
 logging:
   level:
     org.hibernate.SQL: debug

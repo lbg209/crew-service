@@ -34,9 +34,9 @@ class MemberCrewApplicationServiceTest {
     }
 
     private Long createCrew(Long leaderId, int maxMembers) {
-        CrewCreateRequest request = new CrewCreateRequest(leaderId, SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", maxMembers);
+        CrewCreateRequest request = new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", maxMembers);
 
-        return crewService.createCrew(request);
+        return crewService.createCrew(leaderId, request);
     }
 
     @Test
