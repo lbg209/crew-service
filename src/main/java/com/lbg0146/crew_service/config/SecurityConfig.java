@@ -62,13 +62,13 @@ public class SecurityConfig {
                         .requestMatchers("/login", "/").permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated());
-        /*
+
         http.exceptionHandling(exception -> exception
                 .authenticationEntryPoint((request, response, authException) -> {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 })
         );
-        */
+
 
         http
                 .addFilterBefore(new JwtFilter(jwtTokenProvider, customUserDetailsService), LoginFilter.class);

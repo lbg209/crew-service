@@ -2,12 +2,14 @@ package com.lbg0146.crew_service.service;
 
 import com.lbg0146.crew_service.dto.MemberCreateRequest;
 import com.lbg0146.crew_service.domain.Member;
+import com.lbg0146.crew_service.exception.DuplicateMemberException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @Transactional
@@ -18,32 +20,25 @@ class MemberServiceTest {
 
     @Test
     public void 회원가입() {
-        MemberCreateRequest member = new MemberCreateRequest("lbg", "1234", "LEE");
+        MemberCreateRequest member = new MemberCreateRequest("testID", "1234", "testNickname");
 
         Long saveId = memberService.join(member);
         Member findMember = memberService.findOne(saveId);
-        assertThat(findMember.getNickname()).isEqualTo("LEE");
+        assertThat(findMember.getNickname()).isEqualTo("testNickname");
     }
 
     @Test
-    public void 중복_회원_예외() throws Exception {/*
+    public void 중복_회원_예외() throws Exception {
         //given
-        Member member1 = new Member();
-        member1.setNickname("LEE");
-        member1.setLoginId("lbg");
-        member1.setPassword("1234");
-
-        Member member2 = new Member();
-        member2.setNickname("LEE");
-        member2.setLoginId("kim");
-        member2.setPassword("7894");
+        MemberCreateRequest member1 = new MemberCreateRequest("testID1", "1234", "testNickname1");
+        MemberCreateRequest member2 = new MemberCreateRequest("testID1", "5678", "testNickname2");
 
         //when
         memberService.join(member1);
 
         //then
-        assertThrows(IllegalArgumentException.class, () -> memberService.join(member2)); //예외 발생!!
-        */
+        assertThrows(DuplicateMemberException.class, () -> memberService.join(member2)); //예외 발생!!
+
     }
 
 }

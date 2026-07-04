@@ -6,6 +6,9 @@ import com.lbg0146.crew_service.domain.MemberCrewApplication;
 import com.lbg0146.crew_service.domain.enums.ApplicationStatus;
 import com.lbg0146.crew_service.domain.enums.Region;
 import com.lbg0146.crew_service.domain.enums.SubCategory;
+import com.lbg0146.crew_service.exception.DuplicateApplicationException;
+import com.lbg0146.crew_service.exception.InvalidMemberCountException;
+import com.lbg0146.crew_service.exception.UnauthorizedException;
 import com.lbg0146.crew_service.repository.MemberCrewApplicationRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +30,7 @@ class MemberCrewApplicationServiceTest {
     @Autowired
     CrewService crewService;
 
-    private Long createAndSaveMember(String loginId, String nickname) {
+    private Long createMember(String loginId, String nickname) {
         MemberCreateRequest member = new MemberCreateRequest(loginId, "1234", nickname);
 
         return memberService.join(member);
@@ -41,8 +44,8 @@ class MemberCrewApplicationServiceTest {
 
     @Test
     public void 크루신청() {
-        Long leaderId = createAndSaveMember("lbg", "LEE");
-        Long applicantId = createAndSaveMember("abc", "KIM");
+        Long leaderId = createMember("lbg", "LEE");
+        Long applicantId = createMember("abc", "KIM");
         Long crewId = createCrew(leaderId, 10);
 
         applicationService.apply(applicantId, crewId);
@@ -56,8 +59,8 @@ class MemberCrewApplicationServiceTest {
 
     @Test
     public void 승인() {
-        Long leaderId = createAndSaveMember("lbg", "LEE");
-        Long applicantId = createAndSaveMember("abc", "KIM");
+        Long leaderId = createMember("lbg", "LEE");
+        Long applicantId = createMember("abc", "KIM");
         Long crewId = createCrew(leaderId, 10);
 
         applicationService.apply(applicantId, crewId);
@@ -70,8 +73,8 @@ class MemberCrewApplicationServiceTest {
 
     @Test
     public void 거절() {
-        Long leaderId = createAndSaveMember("lbg", "LEE");
-        Long applicantId = createAndSaveMember("abc", "KIM");
+        Long leaderId = createMember("lbg", "LEE");
+        Long applicantId = createMember("abc", "KIM");
         Long crewId = createCrew(leaderId, 10);
 
         applicationService.apply(applicantId, crewId);
@@ -83,73 +86,69 @@ class MemberCrewApplicationServiceTest {
 
     @Test
     public void 중복신청_예외() {
-        Long leaderId = createAndSaveMember("lbg", "LEE");
-        Long applicantId = createAndSaveMember("abc", "KIM");
+        Long leaderId = createMember("lbg", "LEE");
+        Long applicantId = createMember("abc", "KIM");
         Long crewId = createCrew(leaderId, 10);
 
         applicationService.apply(applicantId, crewId);
 
-        assertThatThrownBy(() -> applicationService.apply(applicantId, crewId)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> applicationService.apply(applicantId, crewId)).isInstanceOf(DuplicateApplicationException.class);
     }
 
     @Test
     public void 중복승인_예외() {
-        Long leaderId = createAndSaveMember("lbg", "LEE");
-        Long applicantId = createAndSaveMember("abc", "KIM");
+        Long leaderId = createMember("lbg", "LEE");
+        Long applicantId = createMember("abc", "KIM");
         Long crewId = createCrew(leaderId, 10);
 
-        applicationService.apply(applicantId, crewId);
-        MemberCrewApplication application = applicationRepository.findByMemberIdAndCrewId(applicantId, crewId).orElseThrow();
-        applicationService.approve(application.getId(), leaderId);
+        Long applyId = applicationService.apply(applicantId, crewId);
+        applicationService.approve(applyId, leaderId);
 
-        assertThatThrownBy(() -> applicationService.approve(application.getId(), leaderId)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> applicationService.approve(applyId, leaderId)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     public void 정원초과_예외() {
-        Long leaderId = createAndSaveMember("lbg", "LEE");
-        Long applicantId = createAndSaveMember("abc", "KIM");
+        Long leaderId = createMember("lbg", "LEE");
+        Long applicantId = createMember("abc", "KIM");
         Long crewId = createCrew(leaderId, 1);
 
-        applicationService.apply(applicantId, crewId);
-        MemberCrewApplication application = applicationRepository.findByMemberIdAndCrewId(applicantId, crewId).orElseThrow();
+        Long applyId = applicationService.apply(applicantId, crewId);
 
-        assertThatThrownBy(() -> applicationService.approve(application.getId(), leaderId)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> applicationService.approve(applyId, leaderId)).isInstanceOf(InvalidMemberCountException.class);
     }
 
     @Test
     public void 크루장_신청_예외() {
-        Long leaderId = createAndSaveMember("lbg", "LEE");
+        Long leaderId = createMember("lbg", "LEE");
         Long crewId = createCrew(leaderId, 1);
 
-        assertThatThrownBy(() -> applicationService.apply(leaderId, crewId)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> applicationService.apply(leaderId, crewId)).isInstanceOf(UnauthorizedException.class);
     }
 
     @Test
     public void 크루장이_아닌_멤버의_승인또는거절_예외() {
-        Long leaderId = createAndSaveMember("lbg", "LEE");
-        Long applicantId = createAndSaveMember("abc", "KIM");
-        Long crewMemberId = createAndSaveMember("member1", "member");
+        Long leaderId = createMember("lbg", "LEE");
+        Long applicantId = createMember("abc", "KIM");
+        Long memberId = createMember("member1", "member");
         Long crewId = createCrew(leaderId, 1);
 
-        applicationService.apply(applicantId, crewId);
-        MemberCrewApplication application = applicationRepository.findByMemberIdAndCrewId(applicantId, crewId).orElseThrow();
+        Long applyId = applicationService.apply(applicantId, crewId);
 
-        assertThatThrownBy(() -> applicationService.approve(application.getId(), crewMemberId)).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> applicationService.reject(application.getId(), crewMemberId)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> applicationService.approve(applyId, memberId)).isInstanceOf(UnauthorizedException.class);
+        assertThatThrownBy(() -> applicationService.reject(applyId, memberId)).isInstanceOf(UnauthorizedException.class);
     }
 
     @Test
     public void 중복거절_예외() {
-        Long leaderId = createAndSaveMember("lbg", "LEE");
-        Long applicantId = createAndSaveMember("abc", "KIM");
+        Long leaderId = createMember("lbg", "LEE");
+        Long applicantId = createMember("abc", "KIM");
         Long crewId = createCrew(leaderId, 1);
 
-        applicationService.apply(applicantId, crewId);
-        MemberCrewApplication application = applicationRepository.findByMemberIdAndCrewId(applicantId, crewId).orElseThrow();
-        applicationService.reject(application.getId(), leaderId);
+        Long applyId = applicationService.apply(applicantId, crewId);
+        applicationService.reject(applyId, leaderId);
 
-        assertThatThrownBy(() -> applicationService.reject(application.getId(), leaderId)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> applicationService.reject(applyId, leaderId)).isInstanceOf(IllegalStateException.class);
     }
 
 }
