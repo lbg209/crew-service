@@ -1,10 +1,12 @@
 package com.lbg0146.crew_service.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lbg0146.crew_service.jwt.CustomLogoutFilter;
 import com.lbg0146.crew_service.jwt.JwtFilter;
 import com.lbg0146.crew_service.jwt.JwtTokenProvider;
 import com.lbg0146.crew_service.jwt.LoginFilter;
 import com.lbg0146.crew_service.security.CustomUserDetailsService;
+import com.lbg0146.crew_service.security.RefreshTokenService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +20,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -28,6 +31,7 @@ public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
     private final ObjectMapper objectMapper;
+    private final RefreshTokenService refreshTokenService;
 
     // AuthenticationManager 빈 등록
     @Bean
@@ -59,6 +63,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/members").permitAll()
                         .requestMatchers(HttpMethod.GET, "/crews").permitAll()
                         .requestMatchers(HttpMethod.GET, "/crews/*").permitAll()
+                        .requestMatchers("/reissue").permitAll()
                         .requestMatchers("/login", "/").permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated());
@@ -74,7 +79,9 @@ public class SecurityConfig {
                 .addFilterBefore(new JwtFilter(jwtTokenProvider, customUserDetailsService), LoginFilter.class);
 
         http
-                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtTokenProvider, objectMapper), UsernamePasswordAuthenticationFilter.class);
+                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtTokenProvider, objectMapper, refreshTokenService), UsernamePasswordAuthenticationFilter.class);
+
+        http.addFilterBefore(new CustomLogoutFilter(jwtTokenProvider, refreshTokenService), LogoutFilter.class);
 
         http
                 .sessionManagement((session) -> session

@@ -45,7 +45,7 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        String loginId = jwtTokenProvider.getUsername(token);
+        String loginId = jwtTokenProvider.getLoginId(token);
 
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(loginId);
 

@@ -8,7 +8,6 @@ import com.lbg0146.crew_service.domain.Crew;
 import com.lbg0146.crew_service.domain.Member;
 import com.lbg0146.crew_service.domain.enums.Region;
 import com.lbg0146.crew_service.domain.enums.SubCategory;
-import com.lbg0146.crew_service.dto.CrewLeaderChangeRequest;
 import com.lbg0146.crew_service.dto.CrewSearchCondition;
 import com.lbg0146.crew_service.exception.*;
 import com.lbg0146.crew_service.repository.CrewRepository;
