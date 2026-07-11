@@ -26,17 +26,28 @@ class CrewServiceTest {
     @Autowired
     MemberCrewApplicationService applicationService;
 
+    private Long createLeader() {
+        return memberService.join(new MemberCreateRequest("leader", "1234", "leader"));
+    }
+
+    private Long createMember() {
+        return memberService.join(new MemberCreateRequest("member", "1234", "member"));
+    }
+
+    private Long createCrew(Long leaderId) {
+        return crewService.createCrew(leaderId, new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "soccer", "footballclub", 10));
+    }
+
     @Test
     public void 크루생성() {
-        MemberCreateRequest member = new MemberCreateRequest("lbg", "1234", "LEE");
-        Long saveId = memberService.join(member);
+        Long leaderId = createLeader();
 
         CrewCreateRequest crewCreateRequest = new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "축구크루", "footballmans", 10);
-        Long createId = crewService.createCrew(saveId ,crewCreateRequest);
+        Long createId = crewService.createCrew(leaderId ,crewCreateRequest);
         Crew findCrew = crewService.findOne(createId);
 
         assertThat(findCrew.getTitle()).isEqualTo("축구크루");
-        assertThat(findCrew.getLeader().getId()).isEqualTo(saveId);
+        assertThat(findCrew.getLeader().getId()).isEqualTo(leaderId);
         assertThat(findCrew.getCurrentMemberCount()).isEqualTo(1);
         assertThat(findCrew.getSubCategory()).isEqualTo(SubCategory.FOOTBALL);
         assertThat(findCrew.getRegion()).isEqualTo(Region.SEOUL);
@@ -52,23 +63,24 @@ class CrewServiceTest {
 
     @Test
     public void 크루_수정_성공() {
-        Long memberId = memberService.join(new MemberCreateRequest("lbg", "1234", "LEE"));
-        Long crewId = crewService.createCrew(memberId, new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "soccer", "footballclub", 10));
+        Long leaderId = createLeader();
+        Long crewId = createCrew(leaderId);
 
 
-        crewService.update(crewId, memberId, SubCategory.BASKETBALL, Region.BUSAN, "BASKETBALL", "basketballclub", 15);
+        crewService.update(crewId, leaderId, SubCategory.BASKETBALL, Region.BUSAN, "BASKETBALL", "basketballclub", 15);
 
         Crew crew = crewService.findOne(crewId);
 
         assertThat(crew.getTitle()).isEqualTo("BASKETBALL");
     }
 
+
     @Test
     public void 크루_수정_리더아니면_실패() {
-        Long leaderId = memberService.join(new MemberCreateRequest("leader", "1234", "leader"));
-        Long memberId = memberService.join(new MemberCreateRequest("member", "1234", "member"));
+        Long leaderId = createLeader();
+        Long memberId = createMember();
 
-        Long crewId = crewService.createCrew(leaderId, new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "soccer", "footballclub", 10));
+        Long crewId = createCrew(leaderId);
 
         assertThatThrownBy(() -> crewService.update(crewId, memberId, SubCategory.BASKETBALL, Region.BUSAN, "BASKETBALL", "basketballclub", 15))
                 .isInstanceOf(UnauthorizedException.class);
@@ -76,9 +88,9 @@ class CrewServiceTest {
 
     @Test
     void 모집상태_변경() {
-        Long leaderId = memberService.join(new MemberCreateRequest("leader", "1234", "leader"));
+        Long leaderId = createLeader();
 
-        Long crewId = crewService.createCrew(leaderId, new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "soccer", "footballclub", 10));
+        Long crewId = createCrew(leaderId);
 
         crewService.changeRecruitmentStatus(crewId, leaderId, RecruitmentStatus.CLOSED);
 
@@ -89,9 +101,9 @@ class CrewServiceTest {
 
     @Test
     void 크루리더_변경() {
-        Long oldLeaderId = memberService.join(new MemberCreateRequest("leader", "1234", "leader"));
-        Long newLeaderId = memberService.join(new MemberCreateRequest("member", "1234", "member"));
-        Long crewId = crewService.createCrew(oldLeaderId, new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "soccer", "footballclub", 10));
+        Long oldLeaderId = createLeader();
+        Long newLeaderId = createMember();
+        Long crewId = createCrew(oldLeaderId);
 
         Long applyId = applicationService.apply(newLeaderId, crewId);
 
@@ -107,10 +119,10 @@ class CrewServiceTest {
 
     @Test
     void 크루_탈퇴_성공() {
-        Long leaderId = memberService.join(new MemberCreateRequest("leader", "1234", "leader"));
-        Long memberId = memberService.join(new MemberCreateRequest("member", "1234", "member"));
+        Long leaderId = createLeader();
+        Long memberId = createMember();
 
-        Long crewId = crewService.createCrew(leaderId, new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "soccer", "footballclub", 10));
+        Long crewId = createCrew(leaderId);
 
         Long apply = applicationService.apply(memberId, crewId);
 

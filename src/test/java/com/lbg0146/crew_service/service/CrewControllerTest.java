@@ -43,7 +43,19 @@ public class CrewControllerTest {
 
         memberService.join(request);
 
-        return jwtTokenProvider.createJwt(loginId, "ROLE_USER", 1000L * 60 * 10);
+        return jwtTokenProvider.createJwt("access", loginId, "ROLE_USER", 1000L * 60 * 10);
+    }
+
+    private String getToken(String loginId) {
+        return jwtTokenProvider.createJwt("access", loginId, "ROLE_USER", 1000L * 60 * 10);
+    }
+
+    private Long createCrew(Long memberId) {
+        return crewService.createCrew(memberId, new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "soccer", "footballclub", 10));
+    }
+
+    private Long createMember() {
+        return memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
     }
 
     @Test
@@ -86,10 +98,10 @@ public class CrewControllerTest {
     @Test
     void 크루_수정_성공_테스트() throws Exception {
 
-        Long memberId = memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
-        Long crewId = crewService.createCrew(memberId, new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "soccer", "footballclub", 10));
+        Long memberId = createMember();
+        Long crewId = createCrew(memberId);
 
-        String token = jwtTokenProvider.createJwt("test999", "ROLE_USER", 1000L * 60 * 10);
+        String token = getToken("test999");
 
         mockMvc.perform(patch("/crews/"+crewId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -113,14 +125,16 @@ public class CrewControllerTest {
         assertThat(crew.getMaxMemberCount()).isEqualTo(20);
     }
 
+
+
     @Test
     void 크루_수정_실패_테스트() throws Exception {
 
-        Long leaderId = memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
+        Long leaderId = createMember();
         memberService.join(new MemberCreateRequest("test444", "1234", "nickname444"));
-        Long crewId = crewService.createCrew(leaderId, new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "soccer", "footballclub", 10));
+        Long crewId = createCrew(leaderId);
 
-        String token = jwtTokenProvider.createJwt("test444", "ROLE_USER", 1000L * 60 * 10);
+        String token = getToken("test444");
 
         mockMvc.perform(patch("/crews/"+crewId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -144,9 +158,9 @@ public class CrewControllerTest {
     @Test
     void 크루_수정_JWT없이_테스트() throws Exception {
 
-        Long leaderId = memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
+        Long leaderId = createMember();
         memberService.join(new MemberCreateRequest("test444", "1234", "nickname444"));
-        Long crewId = crewService.createCrew(leaderId, new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "soccer", "footballclub", 10));
+        Long crewId = createCrew(leaderId);
 
         mockMvc.perform(patch("/crews/"+crewId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -165,10 +179,10 @@ public class CrewControllerTest {
     @Test
     void 크루_삭제_성공_테스트() throws Exception {
 
-        Long leaderId = memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
-        Long crewId = crewService.createCrew(leaderId, new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "soccer", "footballclub", 10));
+        Long leaderId = createMember();
+        Long crewId = createCrew(leaderId);
 
-        String token = jwtTokenProvider.createJwt("test999", "ROLE_USER", 1000L * 60 * 10);
+        String token = getToken("test999");
 
         mockMvc.perform(delete("/crews/" + crewId)
                         .header("Authorization", "Bearer " + token))
@@ -180,11 +194,11 @@ public class CrewControllerTest {
     @Test
     void 크루_삭제_실패_테스트() throws Exception {
 
-        Long leaderId = memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
+        Long leaderId = createMember();
         memberService.join(new MemberCreateRequest("test444", "1234", "nickname444"));
-        Long crewId = crewService.createCrew(leaderId, new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "soccer", "footballclub", 10));
+        Long crewId = createCrew(leaderId);
 
-        String token = jwtTokenProvider.createJwt("test444", "ROLE_USER", 1000L * 60 * 10);
+        String token = getToken("test444");
 
         mockMvc.perform(delete("/crews/" + crewId)
                         .header("Authorization", "Bearer " + token))
@@ -197,9 +211,9 @@ public class CrewControllerTest {
     @Test
     void 크루_삭제_JWT없이_테스트() throws Exception {
 
-        Long leaderId = memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
+        Long leaderId = createMember();
         memberService.join(new MemberCreateRequest("test444", "1234", "nickname444"));
-        Long crewId = crewService.createCrew(leaderId, new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "soccer", "footballclub", 10));
+        Long crewId = createCrew(leaderId);
 
         mockMvc.perform(delete("/crews/" + crewId))
                 .andExpect(status().isUnauthorized());
@@ -208,10 +222,10 @@ public class CrewControllerTest {
     @Test
     void 크루_모집_상태_변경_성공_테스트() throws Exception {
 
-        Long leaderId = memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
-        Long crewId = crewService.createCrew(leaderId, new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "soccer", "footballclub", 10));
+        Long leaderId = createMember();
+        Long crewId = createCrew(leaderId);
 
-        String token = jwtTokenProvider.createJwt("test999", "ROLE_USER", 1000L * 60 * 10);
+        String token = getToken("test999");
 
         mockMvc.perform(patch("/crews/" + crewId + "/recruitment")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -231,11 +245,11 @@ public class CrewControllerTest {
     @Test
     void 크루_모집_상태_변경_실패_테스트() throws Exception {
 
-        Long leaderId = memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
+        Long leaderId = createMember();
         memberService.join(new MemberCreateRequest("test444", "1234", "nickname444"));
-        Long crewId = crewService.createCrew(leaderId, new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "soccer", "footballclub", 10));
+        Long crewId = createCrew(leaderId);
 
-        String token = jwtTokenProvider.createJwt("test444", "ROLE_USER", 1000L * 60 * 10);
+        String token = getToken("test444");
 
         mockMvc.perform(patch("/crews/" + crewId + "/recruitment")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -254,11 +268,11 @@ public class CrewControllerTest {
 
     @Test
     void 크루_모집_상태_변경_JWT없이_테스트() throws Exception {
-        Long leaderId = memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
+        Long leaderId = createMember();
         memberService.join(new MemberCreateRequest("test444", "1234", "nickname444"));
-        Long crewId = crewService.createCrew(leaderId, new CrewCreateRequest(SubCategory.FOOTBALL, Region.SEOUL, "soccer", "footballclub", 10));
+        Long crewId = createCrew(leaderId);
 
-        String token = jwtTokenProvider.createJwt("test444", "ROLE_USER", 1000L * 60 * 10);
+        getToken("test444");
 
         mockMvc.perform(patch("/crews/" + crewId + "/recruitment")
                         .contentType(MediaType.APPLICATION_JSON)

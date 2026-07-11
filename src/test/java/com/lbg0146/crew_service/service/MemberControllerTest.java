@@ -35,7 +35,13 @@ public class MemberControllerTest {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+    private Long createMember() {
+        return memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
+    }
 
+    private String getToken() {
+        return jwtTokenProvider.createJwt("access", "test999", "ROLE_USER", 1000L * 60 * 10);
+    }
 
     @Test
     void 회원가입_성공() throws Exception {
@@ -56,7 +62,7 @@ public class MemberControllerTest {
 
     @Test
     void 로그인_성공() throws Exception {
-        Long memberId = memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
+        Long memberId = createMember();
 
         mockMvc.perform(post("/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -70,22 +76,26 @@ public class MemberControllerTest {
                 .andExpect(header().exists("Authorization"));
     }
 
+
+
     @Test
     void 단일회원_조회() throws Exception {
 
-        Long memberId = memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
-        String token = jwtTokenProvider.createJwt("test999", "ROLE_USER", 1000L * 60 * 10);
+        Long memberId = createMember();
+        String token = getToken();
 
         mockMvc.perform(get("/members/{memberId}", memberId)
                     .header("Authorization", "Bearer " + token))
                     .andExpect(status().isOk());
     }
 
+
+
     @Test
     void 존재하지_않는_회원_조회() throws Exception {
 
-        Long memberId = memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
-        String token = jwtTokenProvider.createJwt("test999", "ROLE_USER", 1000L * 60 * 10);
+        Long memberId = createMember();
+        String token = getToken();
 
         mockMvc.perform(get("/members/{memberId}", 9999L)
                         .header("Authorization", "Bearer " + token))
@@ -95,8 +105,8 @@ public class MemberControllerTest {
     @Test
     void 전체_회원_조회() throws Exception {
 
-        Long memberId = memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
-        String token = jwtTokenProvider.createJwt("test999", "ROLE_USER", 1000L * 60 * 10);
+        Long memberId = createMember();
+        String token = getToken();
 
         mockMvc.perform(get("/members")
                         .header("Authorization", "Bearer " + token))
@@ -106,8 +116,8 @@ public class MemberControllerTest {
     @Test
     void 회원_정보_수정() throws Exception {
 
-        Long memberId = memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
-        String token = jwtTokenProvider.createJwt("test999", "ROLE_USER", 1000L * 60 * 10);
+        Long memberId = createMember();
+        String token = getToken();
 
         mockMvc.perform(patch("/members/me")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -127,7 +137,7 @@ public class MemberControllerTest {
     @Test
     void 회원_정보_JWT없이_수정() throws Exception {
 
-        Long memberId = memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
+        Long memberId = createMember();
 
         mockMvc.perform(patch("/members/me")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -142,8 +152,8 @@ public class MemberControllerTest {
     @Test
     void 회원_삭제() throws Exception {
 
-        Long memberId = memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
-        String token = jwtTokenProvider.createJwt("test999", "ROLE_USER", 1000L * 60 * 10);
+        Long memberId = createMember();
+        String token = getToken();
 
         mockMvc.perform(delete("/members/me")
                     .header("Authorization", "Bearer " + token))
@@ -155,7 +165,7 @@ public class MemberControllerTest {
     @Test
     void 회원_JWT없이_삭제() throws Exception {
 
-        Long memberId = memberService.join(new MemberCreateRequest("test999", "1234", "nickname999"));
+        Long memberId = createMember();
 
         mockMvc.perform(delete("/members/me"))
                 .andExpect(status().isUnauthorized());
