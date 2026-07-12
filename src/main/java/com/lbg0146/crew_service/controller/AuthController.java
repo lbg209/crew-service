@@ -3,6 +3,7 @@ package com.lbg0146.crew_service.controller;
 import com.lbg0146.crew_service.dto.TokenResponse;
 import com.lbg0146.crew_service.security.AuthService;
 import com.lbg0146.crew_service.security.CookieUtil;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,6 +20,10 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/reissue")
+    @Operation(
+            summary = "Access Token 재발급",
+            description = "Refresh Token을 이용하여 Access Token과 Refresh Token을 재발급합니다."
+    )
     public ResponseEntity<?> reissue(HttpServletRequest request, HttpServletResponse response) {
 
         // 쿠키 검증
@@ -33,5 +38,4 @@ public class AuthController {
 
         return  ResponseEntity.ok().build();
     }
-
 }
