@@ -1,5 +1,6 @@
 package com.lbg0146.crew_service.service;
 
+import com.lbg0146.crew_service.aop.ExecutionTime;
 import com.lbg0146.crew_service.domain.Crew;
 import com.lbg0146.crew_service.domain.Member;
 import com.lbg0146.crew_service.domain.MemberCrewApplication;
@@ -24,6 +25,7 @@ public class MemberCrewApplicationService {
     private final CrewRepository crewRepository;
     private final MemberCrewApplicationRepository applicationRepository;
 
+    @ExecutionTime
     public Long apply(Long memberId, Long crewId) {
         if (applicationRepository.findByMemberIdAndCrewId(memberId, crewId).isPresent()){
             throw new DuplicateApplicationException();
@@ -47,6 +49,7 @@ public class MemberCrewApplicationService {
         return application.getId();
     }
 
+    @ExecutionTime
     public void approve(Long applicationId, Long leaderId) {
         MemberCrewApplication application = applicationRepository.findById(applicationId).orElseThrow(() -> new ApplicationNotFoundException());
 
@@ -60,6 +63,7 @@ public class MemberCrewApplicationService {
         crew.increaseMemberCount();
     }
 
+    @ExecutionTime
     public void reject(Long applicationId, Long leaderId) {
         MemberCrewApplication application = applicationRepository.findById(applicationId).orElseThrow(() -> new ApplicationNotFoundException());
 
@@ -86,6 +90,7 @@ public class MemberCrewApplicationService {
         return applicationRepository.searchByMember(memberId, status, pageable);
     }
 
+    @ExecutionTime
     public void cancel(Long applicationId, Long memberId) {
         MemberCrewApplication application = applicationRepository.findById(applicationId).orElseThrow(() -> new ApplicationNotFoundException());
 

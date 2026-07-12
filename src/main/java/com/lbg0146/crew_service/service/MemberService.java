@@ -1,5 +1,6 @@
 package com.lbg0146.crew_service.service;
 
+import com.lbg0146.crew_service.aop.ExecutionTime;
 import com.lbg0146.crew_service.dto.MemberCreateRequest;
 import com.lbg0146.crew_service.domain.Member;
 import com.lbg0146.crew_service.exception.DuplicateMemberException;
@@ -22,6 +23,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
+    @ExecutionTime
     @Transactional
     public Long join(MemberCreateRequest request) {
         Boolean isExist = memberRepository.existsByLoginId(request.getLoginId());
