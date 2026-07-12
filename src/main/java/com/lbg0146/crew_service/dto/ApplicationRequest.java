@@ -1,7 +1,7 @@
 package com.lbg0146.crew_service.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,7 +13,7 @@ import lombok.Setter;
 public class ApplicationRequest {
 
     @Schema(description = "신청할 크루 ID", example = "3")
-    @NotBlank
+    @NotNull
     private Long crewId;
 
     public ApplicationRequest(Long crewId) {

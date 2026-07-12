@@ -1,7 +1,7 @@
 package com.lbg0146.crew_service.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,7 +13,7 @@ import lombok.Setter;
 public class MemberUpdateRequest {
 
     @Schema(description = "멤버 변경 닉네임", example = "MESSI")
-    @NotNull
+    @NotBlank
     private String nickname;
 
     public MemberUpdateRequest(String nickname) {

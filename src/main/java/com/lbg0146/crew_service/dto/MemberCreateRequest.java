@@ -2,6 +2,7 @@ package com.lbg0146.crew_service.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,7 +14,7 @@ import lombok.Setter;
 public class MemberCreateRequest {
 
     @Schema(description = "멤버 로그인 ID", example = "kim1234")
-    @NotBlank
+    @NotNull
     private String loginId;
 
     @Schema(description = "멤버 패스워드", example = "1234")
