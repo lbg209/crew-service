@@ -1,4 +1,4 @@
-package com.lbg0146.crew_service.jwt;
+package com.lbg0146.crew_service.security.jwt;
 
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Value;

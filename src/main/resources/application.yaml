@@ -11,10 +11,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: OFF
     properties:
       hibernate:
-        format_sql: true
+        format_sql: OFF
 
   data:
     web:
@@ -27,4 +27,4 @@ spring:
 
 logging:
   level:
-    org.hibernate.SQL: debug
+    org.hibernate.SQL: OFF

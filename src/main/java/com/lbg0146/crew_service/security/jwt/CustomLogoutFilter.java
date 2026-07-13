@@ -1,4 +1,4 @@
-package com.lbg0146.crew_service.jwt;
+package com.lbg0146.crew_service.security.jwt;
 
 import com.lbg0146.crew_service.security.CookieUtil;
 import com.lbg0146.crew_service.security.RefreshTokenService;

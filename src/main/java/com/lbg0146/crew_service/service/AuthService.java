@@ -1,7 +1,8 @@
-package com.lbg0146.crew_service.security;
+package com.lbg0146.crew_service.service;
 
 import com.lbg0146.crew_service.dto.TokenResponse;
-import com.lbg0146.crew_service.jwt.JwtTokenProvider;
+import com.lbg0146.crew_service.security.RefreshTokenService;
+import com.lbg0146.crew_service.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

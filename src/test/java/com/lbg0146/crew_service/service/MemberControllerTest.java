@@ -3,7 +3,7 @@ package com.lbg0146.crew_service.service;
 import com.lbg0146.crew_service.domain.Member;
 import com.lbg0146.crew_service.dto.MemberCreateRequest;
 import com.lbg0146.crew_service.exception.MemberNotFoundException;
-import com.lbg0146.crew_service.jwt.JwtTokenProvider;
+import com.lbg0146.crew_service.security.jwt.JwtTokenProvider;
 import com.lbg0146.crew_service.repository.MemberRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -7,7 +7,7 @@ import com.lbg0146.crew_service.domain.enums.SubCategory;
 import com.lbg0146.crew_service.dto.CrewCreateRequest;
 import com.lbg0146.crew_service.dto.MemberCreateRequest;
 import com.lbg0146.crew_service.exception.CrewNotFoundException;
-import com.lbg0146.crew_service.jwt.JwtTokenProvider;
+import com.lbg0146.crew_service.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

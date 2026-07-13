@@ -6,7 +6,7 @@ import com.lbg0146.crew_service.domain.enums.Region;
 import com.lbg0146.crew_service.domain.enums.SubCategory;
 import com.lbg0146.crew_service.dto.CrewCreateRequest;
 import com.lbg0146.crew_service.dto.MemberCreateRequest;
-import com.lbg0146.crew_service.jwt.JwtTokenProvider;
+import com.lbg0146.crew_service.security.jwt.JwtTokenProvider;
 import com.lbg0146.crew_service.repository.MemberCrewApplicationRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

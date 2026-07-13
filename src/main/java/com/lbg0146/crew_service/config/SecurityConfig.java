@@ -1,13 +1,13 @@
 package com.lbg0146.crew_service.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lbg0146.crew_service.jwt.CustomLogoutFilter;
-import com.lbg0146.crew_service.jwt.JwtFilter;
-import com.lbg0146.crew_service.jwt.JwtTokenProvider;
-import com.lbg0146.crew_service.jwt.LoginFilter;
+import com.lbg0146.crew_service.security.handler.CustomAuthenticationEntryPoint;
+import com.lbg0146.crew_service.security.jwt.CustomLogoutFilter;
+import com.lbg0146.crew_service.security.jwt.JwtFilter;
+import com.lbg0146.crew_service.security.jwt.JwtTokenProvider;
+import com.lbg0146.crew_service.security.jwt.LoginFilter;
 import com.lbg0146.crew_service.security.CustomUserDetailsService;
 import com.lbg0146.crew_service.security.RefreshTokenService;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,6 +32,7 @@ public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
     private final ObjectMapper objectMapper;
     private final RefreshTokenService refreshTokenService;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     // AuthenticationManager 빈 등록
     @Bean
@@ -48,7 +49,6 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-
         http
                 .csrf((auth) -> auth.disable());
 
@@ -63,23 +63,20 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/members").permitAll()
                         .requestMatchers(HttpMethod.GET, "/crews").permitAll()
                         .requestMatchers(HttpMethod.GET, "/crews/*").permitAll()
-                        .requestMatchers("/reissue").permitAll()
-                        .requestMatchers("/login", "/").permitAll()
+                        .requestMatchers("/login", "/", "/reissue", "/swagger-ui/**","/v3/api-docs/**",
+                                "/swagger-ui.html").permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated());
 
         http.exceptionHandling(exception -> exception
-                .authenticationEntryPoint((request, response, authException) -> {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                })
-        );
-
+                .authenticationEntryPoint(customAuthenticationEntryPoint));
 
         http
-                .addFilterBefore(new JwtFilter(jwtTokenProvider, customUserDetailsService), LoginFilter.class);
+                .addFilterBefore(new JwtFilter(jwtTokenProvider, customUserDetailsService, customAuthenticationEntryPoint), LoginFilter.class);
 
         http
-                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtTokenProvider, objectMapper, refreshTokenService), UsernamePasswordAuthenticationFilter.class);
+                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtTokenProvider, objectMapper, refreshTokenService),
+                        UsernamePasswordAuthenticationFilter.class);
 
         http.addFilterBefore(new CustomLogoutFilter(jwtTokenProvider, refreshTokenService), LogoutFilter.class);
 
