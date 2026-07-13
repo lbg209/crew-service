@@ -53,14 +53,14 @@ public class MemberCrewApplicationService {
     public void approve(Long applicationId, Long leaderId) {
         MemberCrewApplication application = applicationRepository.findById(applicationId).orElseThrow(() -> new ApplicationNotFoundException());
 
-        Crew crew = application.getCrew();
+        Crew crew = crewRepository.findByIdWithLock(application.getCrew().getId()).orElseThrow(() -> new CrewNotFoundException());
 
         if (!crew.getLeader().getId().equals(leaderId)) {
-            throw new UnauthorizedException("크루 리더만 승인 가능합니다.");
+            throw new UnauthorizedException("크루장만 승인 가능합니다.");
         }
 
-        application.approve();
         crew.increaseMemberCount();
+        application.approve();
     }
 
     @ExecutionTime
@@ -70,12 +70,13 @@ public class MemberCrewApplicationService {
         Crew crew = application.getCrew();
 
         if (!crew.getLeader().getId().equals(leaderId)) {
-            throw new UnauthorizedException("크루 리더만 거절 가능합니다.");
+            throw new UnauthorizedException("크루장만 거절 가능합니다.");
         }
 
         application.reject();
     }
 
+    @Transactional(readOnly = true)
     public Page<MemberCrewApplication> findApplicationsByCrew(Long crewId,Long memberId , ApplicationStatus status, Pageable pageable) {
         Crew crew = crewRepository.findById(crewId).orElseThrow(()-> new CrewNotFoundException());
 
@@ -86,6 +87,7 @@ public class MemberCrewApplicationService {
         return applicationRepository.searchByCrew(crewId, status, pageable);
     }
 
+    @Transactional(readOnly = true)
     public Page<MemberCrewApplication> findApplicationsByMember(Long memberId, ApplicationStatus status , Pageable pageable) {
         return applicationRepository.searchByMember(memberId, status, pageable);
     }

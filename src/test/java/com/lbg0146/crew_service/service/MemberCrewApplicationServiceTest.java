@@ -1,5 +1,6 @@
 package com.lbg0146.crew_service.service;
 
+import com.lbg0146.crew_service.domain.Crew;
 import com.lbg0146.crew_service.dto.CrewCreateRequest;
 import com.lbg0146.crew_service.dto.MemberCreateRequest;
 import com.lbg0146.crew_service.domain.MemberCrewApplication;
@@ -13,7 +14,11 @@ import com.lbg0146.crew_service.repository.MemberCrewApplicationRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -149,6 +154,66 @@ class MemberCrewApplicationServiceTest {
         applicationService.reject(applyId, leaderId);
 
         assertThatThrownBy(() -> applicationService.reject(applyId, leaderId)).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void 동시에_승인요청시_정원을_초과하지_않는다() throws Exception {
+        Long leaderId = createMember("leader101", "leader101");
+        Long member1 = createMember("member500", "member500");
+        Long member2 = createMember("member501", "member501");
+
+        Long crewId = createCrew(leaderId, 2);
+
+        Long apply1 = applicationService.apply(member1, crewId);
+        Long apply2 = applicationService.apply(member2, crewId);
+
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        CountDownLatch latch = new CountDownLatch(2);
+        List<Exception> exceptions = new CopyOnWriteArrayList<>();
+
+        executorService.submit(() -> {
+            try {
+                applicationService.approve(apply1, leaderId);
+            } catch (Exception e) {
+                exceptions.add(e);
+            } finally {
+                latch.countDown();
+            }
+        });
+
+        executorService.submit(() -> {
+            try {
+                applicationService.approve(apply2, leaderId);
+            } catch (Exception e) {
+                exceptions.add(e);
+            } finally {
+                latch.countDown();
+            }
+        });
+
+        latch.await(5, TimeUnit.SECONDS);
+
+        Crew crew = crewService.findOne(crewId);
+
+        assertThat(crew.getCurrentMemberCount()).isEqualTo(2);
+
+        MemberCrewApplication application1 = applicationRepository.findById(apply1).orElseThrow();
+        MemberCrewApplication application2 = applicationRepository.findById(apply2).orElseThrow();
+
+        long approvedCount = 0;
+
+        if (application1.getStatus() == ApplicationStatus.APPROVED)
+            approvedCount++;
+        if (application2.getStatus() == ApplicationStatus.APPROVED)
+            approvedCount++;
+
+        assertThat(approvedCount).isEqualTo(1);
+
+        assertThat(exceptions)
+                .hasSize(1)
+                .first()
+                .isInstanceOf(InvalidMemberCountException.class);
     }
 
 }
