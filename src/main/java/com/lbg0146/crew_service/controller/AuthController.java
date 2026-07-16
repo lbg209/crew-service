@@ -1,7 +1,7 @@
 package com.lbg0146.crew_service.controller;
 
 import com.lbg0146.crew_service.dto.TokenResponse;
-import com.lbg0146.crew_service.security.AuthService;
+import com.lbg0146.crew_service.service.AuthService;
 import com.lbg0146.crew_service.security.CookieUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
