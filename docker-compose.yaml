@@ -2,7 +2,7 @@ services:
   mysql:
     image: mysql:8
     container_name: mysql-container
-    restart: always
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: 1234
       MYSQL_DATABASE: crew_service
@@ -10,23 +10,35 @@ services:
       - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p1234"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7
     container_name: redis-container
-    restart: always
+    restart: unless-stopped
     ports:
       - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   crew-service:
-    image: crew-service
+    image: lbg209/crew-service:latest
     container_name: crew-service-container
-    restart: always
+    restart: unless-stopped
     ports:
       - "8080:8080"
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: docker
 
