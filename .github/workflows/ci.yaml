@@ -7,6 +7,20 @@ jobs:
   build:
     runs-on: ubuntu-latest # 어떤 작업을 할지
 
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: 1234
+          MYSQL_DATABASE: crew_service
+        ports:
+          - 3306:3306
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
     steps:       # 작업을 어떤 순서로 할지
       - uses: actions/checkout@v4
 
@@ -21,4 +35,3 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew build
-
