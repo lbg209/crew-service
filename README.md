@@ -38,6 +38,8 @@ Redis 기반 Refresh Token Rotation, QueryDSL 동적 검색, Pessimistic Lock을
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Docker Compose](https://img.shields.io/badge/Docker_Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![AWS EC2](https://img.shields.io/badge/AWS_EC2-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
+![Docker Hub](https://img.shields.io/badge/Docker_Hub-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
 ### Documentation
 ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger)
@@ -51,6 +53,7 @@ Redis 기반 Refresh Token Rotation, QueryDSL 동적 검색, Pessimistic Lock을
 - Docker Compose 기반 멀티 컨테이너(Spring Boot, MySQL, Redis) 구성
 - Docker Hub를 통한 애플리케이션 이미지 배포
 - AWS EC2 환경에 Docker Compose를 이용한 서비스 배포
+- GitHub Actions 기반 CI/CD 자동화 구축
 - Swagger API 문서화
 - Service / Controller 테스트 작성
 - N+1 문제 해결
@@ -134,6 +137,78 @@ Docker Compose를 사용하여 Spring Boot, MySQL, Redis를 각각 독립된 컨
   <img src="images/docker.png" width="900">
 </p>
 
+---
+# 🔄 CI/CD Pipeline
+
+GitHub Actions를 활용하여 CI/CD 파이프라인을 구축했습니다.
+
+코드 변경 사항이 GitHub Repository에 Push되면 자동으로 빌드, Docker 이미지 생성, 배포까지 진행됩니다.
+
+## CI (Continuous Integration)
+
+GitHub Actions를 통해 다음 과정을 자동화했습니다.
+
+- Push 발생 시 CI Workflow 실행
+- Gradle Build 및 테스트 수행
+- Docker 이미지 생성
+- Docker Hub에 이미지 Push
+
+### CI Flow
+
+```text
+Git Push
+   ↓
+GitHub Actions CI
+   ↓
+Gradle Build
+   ↓
+Docker Image Build
+   ↓
+Docker Hub Push
+```
+
+### CD Flow
+```text
+Docker Hub
+      ↓
+EC2 SSH 접속
+      ↓
+docker compose pull
+      ↓
+docker compose up -d
+      ↓
+서비스 재배포
+```
+
+### 배포 구조
+```text
+Developer
+    |
+    | git push
+    ↓
+GitHub Repository
+    |
+    ↓
+GitHub Actions
+    |
+    ├── CI
+    |    ├── Gradle Build
+    |    ├── Test
+    |    ├── Docker Image Build
+    |    └── Docker Hub Push
+    |
+    └── CD
+         ├── EC2 SSH Connection
+         ├── Docker Image Pull
+         └── Docker Compose Deploy
+              |
+              ↓
+        AWS EC2
+        |
+        ├── Spring Boot Container
+        ├── MySQL Container
+        └── Redis Container
+```
 
 ---
 
